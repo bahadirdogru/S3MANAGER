@@ -61,6 +61,8 @@ class FileModel(QAbstractItemModel):
     def set_items(self, folders, files):
         """Full replace — used by cache restore."""
         self.beginResetModel()
+        self._acl_cache.clear()
+        self._pending_acl.clear()
         self.items = []
         for f in sorted(folders, key=lambda x: (x.get('name') or '').lower()):
             if not f.get('name') or not f['name'].strip():

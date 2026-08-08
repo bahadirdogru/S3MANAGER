@@ -16,6 +16,17 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-08 — Breadcrumb cache race condition düzeltmesi
+
+- **Ne:** Breadcrumb ile ileri/geri gezinirken klasör içeriği cache'ten yanlış veya karışık geliyordu
+- **Neden:** Önceki `SpacesWorker` sinyalleri navigasyon sonrası bağlı kalıyordu; stale `on_page_loaded` / `on_list_finished` callback'leri modeli ve cache'i bozuyordu
+- **Nasıl:**
+  - `main_window.py`: `_detach_list_worker`, `_stop_list_worker`; stale callback guard; cache put için worker prefix'i
+  - `models.py`: `set_items()` ACL cache temizliği
+- **Dosyalar:** `src/ui/qt/main_window.py`, `src/ui/qt/models.py`
+
+---
+
 ## 2026-08-08 — CI/CD, installer ve güncelleme kontrolü
 
 - **Ne:** GitHub Actions CI/release; Windows NSIS, macOS DMG, Linux tar.gz+AppImage; GitHub Releases güncelleme bildirimi

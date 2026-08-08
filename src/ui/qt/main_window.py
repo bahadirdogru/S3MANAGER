@@ -585,6 +585,30 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.lbl_status.setText(f"Hata: {str(e)}")
 
+    def _detach_list_worker(self, worker):
+        """Liste worker sinyallerini kopar; stale callback'leri engelle."""
+        if not worker:
+            return
+        for signal, slot in (
+            (worker.page_loaded, self.on_page_loaded),
+            (worker.finished_loading, self.on_list_finished),
+            (worker.error, self.on_list_error),
+        ):
+            try:
+                signal.disconnect(slot)
+            except (TypeError, RuntimeError):
+                pass
+        if worker is self._list_worker:
+            self._list_worker = None
+
+    def _stop_list_worker(self, timeout_ms=WORKER_STOP_TIMEOUT_MS):
+        """Liste worker'ını durdur; linger öncesi sinyalleri kopar."""
+        worker = self._list_worker
+        if not worker:
+            return True
+        self._detach_list_worker(worker)
+        return self._stop_worker(worker, timeout_ms)
+
     def _stop_worker(self, worker, timeout_ms=WORKER_STOP_TIMEOUT_MS):
         """Worker'ı güvenle durdur; timeout'ta referansı canlı tut (orphan etme)."""
         if not worker:
@@ -683,7 +707,7 @@ class MainWindow(QMainWindow):
         if not self.spaces_client:
             return
 
-        self._stop_worker(self._list_worker)
+        self._stop_list_worker()
         self._stop_worker(self._attr_worker)
 
         prefix = self._prefix_for_api()
@@ -709,7 +733,7 @@ class MainWindow(QMainWindow):
         self.btn_back.setEnabled(self.current_path != '/')
 
     def _start_list_worker(self, prefix, token):
-        if not self._stop_worker(self._list_worker):
+        if not self._stop_list_worker():
             logger.warning("Önceki liste worker durmadı, yeni sayfa başlatılmadı")
             return
         self._list_worker = SpacesWorker(self.spaces_client, prefix, token)
@@ -725,6 +749,8 @@ class MainWindow(QMainWindow):
 
     @Slot(dict)
     def on_page_loaded(self, page):
+        if self.sender() is not self._list_worker:
+            return
         first = self._continuation_token is None and not self._loading_folders and not self._loading_files
         self._loading_folders.extend(page.get('folders', []))
         self._loading_files.extend(page.get('files', []))
@@ -735,14 +761,23 @@ class MainWindow(QMainWindow):
         self.lbl_status.setText(f"Yükleniyor... ({total} öğe)")
 
     @Slot(dict)
-    def on_list_finished(self, _summary):
+    def on_list_finished(self, summary):
+        if self.sender() is not self._list_worker:
+            return
+        prefix = summary.get('prefix', self._list_prefix)
         total = len(self._loading_folders) + len(self._loading_files)
-        self.listing_cache.put(self._list_prefix, self._loading_folders, self._loading_files)
+        self.listing_cache.put(
+            prefix,
+            list(self._loading_folders),
+            list(self._loading_files),
+        )
         self.lbl_status.setText(f"Hazır - {self.current_path} ({total} öğe)")
         self._schedule_acl_load()
 
     @Slot(str)
     def on_list_error(self, err_msg):
+        if self.sender() is not self._list_worker:
+            return
         QMessageBox.critical(self, "Hata", f"Liste yüklenemedi: {err_msg}")
         self.lbl_status.setText("Hata oluştu")
 
