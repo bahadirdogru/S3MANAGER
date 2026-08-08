@@ -33,7 +33,17 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Install NSIS
-        run: choco install nsis -y --no-progress
+        shell: pwsh
+        run: |
+          choco install nsis -y --no-progress
+          $nsisDir = "${env:ProgramFiles(x86)}\NSIS"
+          if (-not (Test-Path $nsisDir)) {
+            $nsisDir = "$env:ProgramFiles\NSIS"
+          }
+          if (-not (Test-Path $nsisDir)) {
+            Write-Error "NSIS kurulum dizini bulunamadi"
+          }
+          echo "$nsisDir" >> $env:GITHUB_PATH
 
       - name: Package Windows
         shell: pwsh

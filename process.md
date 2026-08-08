@@ -16,6 +16,14 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-08 — v0.0.4 Windows NSIS PATH düzeltmesi
+
+- **Ne:** Release Windows job'unda `makensis` bulunamadi hatasi
+- **Nasil:** `package-windows.ps1` makensis yolunu otomatik bulur; `release.yml` choco sonrasi NSIS dizinini PATH'e ekler
+- **Dosyalar:** `scripts/package-windows.ps1`, `.github/workflows/release.yml`, `src/version.py`
+
+---
+
 ## 2026-08-08 — CI PyInstaller ve NSIS düzeltmesi
 
 - **Ne:** Release/CI build PyInstaller ve Windows NSIS adimlari basarisiz oluyordu
