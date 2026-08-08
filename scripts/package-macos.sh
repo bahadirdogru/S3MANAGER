@@ -29,7 +29,7 @@ ensure_icns() {
 }
 
 ensure_icns
-"$ROOT/scripts/build.sh"
+bash "$ROOT/scripts/build.sh"
 
 APP_PATH="$ROOT/dist/S3MANAGER.app"
 if [[ ! -d "$APP_PATH" ]]; then

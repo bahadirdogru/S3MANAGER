@@ -7,7 +7,7 @@ cd "$ROOT"
 
 echo "S3MANAGER paketleniyor (Linux) v${VERSION}..."
 
-"$ROOT/scripts/build.sh"
+bash "$ROOT/scripts/build.sh"
 
 OUT_DIR="$ROOT/dist/S3MANAGER"
 if [[ ! -d "$OUT_DIR" ]]; then

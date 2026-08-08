@@ -76,7 +76,7 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Package macOS
-        run: chmod +x scripts/package-macos.sh && ./scripts/package-macos.sh "$VERSION"
+        run: bash scripts/package-macos.sh "$VERSION"
 
       - name: Upload macOS assets
         uses: actions/upload-artifact@v4
@@ -105,7 +105,7 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Package Linux
-        run: chmod +x scripts/package-linux.sh && ./scripts/package-linux.sh "$VERSION"
+        run: bash scripts/package-linux.sh "$VERSION"
 
       - name: Upload Linux assets
         uses: actions/upload-artifact@v4
