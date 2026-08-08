@@ -211,7 +211,7 @@ Script'ler venv oluşturur, `requirements.txt` + `requirements-dev.txt` kurar ve
 
 ## Geliştirme notu
 
-Bu projenin kodlama sürecinde büyük ölçüde **LLM (Large Language Model)** araçları kullanılmıştır. Mimari kararlar, kod yapısı ve geliştirme kısıtları [LLM.md](LLM.md) dosyasında belgelenmiştir.
+Bu projenin kodlama sürecinde **LLM (Large Language Model)** araçları kullanılmıştır. Mimari kararlar, kod yapısı ve geliştirme kısıtları [LLM.md](LLM.md) dosyasında belgelenmiştir.
 
 ## Dökümantasyon
 
