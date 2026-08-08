@@ -15,7 +15,7 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $env:VERSION = $Version
 & makensis "/DAPP_VERSION=$Version" "$PSScriptRoot\installer\windows.nsi"
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "NSIS derlemesi basarisiz. NSIS kurulu mu? (choco install nsis)" -ForegroundColor Red
+    Write-Host "NSIS derlemesi basarisiz. NSIS kurulu mu? https://nsis.sourceforge.io/" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 

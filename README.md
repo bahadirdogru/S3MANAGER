@@ -9,7 +9,7 @@
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](https://github.com/)
 
-[Özellikler](#özellikler) · [Kurulum](#kurulum) · [Kullanım](#kullanım) · [Dağıtım](#dağıtım) · [Dökümantasyon](#dökümantasyon)
+[Özellikler](#özellikler) · [Kurulum](#kurulum) · [Roadmap](#roadmap) · [Kullanım](#kullanım) · [Dağıtım](#dağıtım) · [Dökümantasyon](#dökümantasyon)
 
 </div>
 
@@ -94,6 +94,35 @@ python src/main.py
 
 > **Not:** Daha önce eski sürüm kullandıysanız `~/.pydamlaspace/` klasöründeki ayarlar ilk çalıştırmada otomatik olarak `~/.s3manager/` konumuna taşınır.
 
+## Roadmap
+
+S3 uyumlu depolama (boto3) için önceliklendirilmiş geliştirme planı. Maddeler mevcut kod tabanındaki eksiklere göre sıralanmıştır; katkılar ve öneriler [Issues](https://github.com/bahadirdogru/S3MANAGER/issues) üzerinden değerlendirilir.
+
+### Yakın vade — temel S3 işlemleri
+
+| Özellik | Açıklama | Neden önemli |
+|---------|----------|--------------|
+| **Yeniden adlandırma / taşıma / kopyalama** | `copy_object` + `delete_object` ile dosya ve klasör işlemleri | Dosya yöneticisinin olmazsa olmazı; şu an yalnızca silme var |
+| **Çoklu bağlantı profili** | Birden fazla bucket/endpoint kaydı; hızlı geçiş | Tek `config.ini` profili ile sınırlı; AWS S3, MinIO, Backblaze B2 gibi S3 uyumlu servislere genişleme |
+| **Prefix arama ve filtre** | Mevcut klasörde veya bucket genelinde anahtar adına göre arama | Büyük bucket'larda gezinmeyi pratik kılar |
+| **Kimlik bilgisi güvenliği** | OS keyring veya şifreli credential depolama | Access key/secret şu an düz metin (`~/.s3manager/config.ini`) |
+
+### Orta vade — üretkenlik ve görünürlük
+
+| Özellik | Açıklama | Neden önemli |
+|---------|----------|--------------|
+| **Nesne metadata paneli** | `Content-Type`, `Cache-Control`, özel `x-amz-meta-*` görüntüleme/düzenleme | Web asset yönetiminde kritik; boto `head_object` / `copy_object` MetadataDirective |
+| **Dosya önizleme** | Görsel, PDF, metin dosyaları için hızlı önizleme | İndirmeden içerik doğrulama |
+| **Sürükle-bırak yükleme** | Ana pencereden doğrudan hedef klasöre bırakma | Upload dialog'u atlayarak daha hızlı iş akışı |
+| **Transfer kuyruğu** | Bekleyen/tamamlanan yükleme-indirme geçmişi, duraklat/devam | Uzun toplu işlemlerde kontrol ve şeffaflık |
+| **Yükleme devam ettirme** | Kesilen multipart upload'ların resume edilmesi | Büyük dosyalarda güvenilirlik (`list_multipart_uploads`, `upload_part`) |
+
+### Bilinçli olarak kapsam dışı (şimdilik)
+
+- Tam IAM/STS yönetim konsolu
+- Glacier / derin arşiv storage class geçişleri
+- Sunucu tarafı şifreleme (SSE-KMS) yapılandırma sihirbazı
+
 ## Releases
 
 En son sürümü [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz.
@@ -128,7 +157,7 @@ PyInstaller **onedir** ile hedef platformda yerel derleme gerekir (cross-compile
 | Linux | `./scripts/package-linux.sh 0.1.0` | `.tar.gz` + `.AppImage` |
 | Tümü (sadece build) | `.\scripts\build.ps1` / `./scripts/build.sh` | `dist/S3MANAGER/` |
 
-Windows paketleme için [NSIS](https://nsis.sourceforge.io/) gerekir (`choco install nsis`). İkon üretimi: `python scripts/generate_icons.py` (Pillow gerekir).
+Windows paketleme için [NSIS](https://nsis.sourceforge.io/) kurulu olmalıdır — resmi siteden indirip kurun; `makensis` komutunun PATH'te olduğundan emin olun. İkon üretimi: `python scripts/generate_icons.py` (Pillow gerekir).
 
 Script'ler venv oluşturur, `requirements.txt` + `requirements-dev.txt` kurar ve `s3manager.spec` ile derler. Dağıtım için tüm `S3MANAGER/` klasörünü veya installer/release dosyasını paylaşın; yalnızca exe/binary dosyası yeterli değildir (`_internal/` içindeki DLL ve kütüphaneler gerekir).
 
