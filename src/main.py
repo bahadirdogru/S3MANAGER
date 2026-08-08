@@ -2,11 +2,8 @@ import sys
 import logging
 from pathlib import Path
 
-from src.utils.paths import is_frozen
-
-if not is_frozen():
-    project_root = Path(__file__).resolve().parent.parent
-    sys.path.insert(0, str(project_root))
+if not getattr(sys, "frozen", False):
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from PySide6.QtWidgets import QApplication
 
