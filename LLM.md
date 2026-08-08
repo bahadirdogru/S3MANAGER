@@ -12,7 +12,7 @@
 
 # S3MANAGER — LLM Rehberi
 
-DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. **Test yok** — otomatik test kurulmaz.
+DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. Sürüm: **0.0.4** (`src/version.py`). **Test yok** — otomatik test kurulmaz.
 
 ## Dizin yapısı
 
@@ -42,19 +42,20 @@ S3MANAGER/
 │   └── release.yml              # tag → GitHub Release
 ├── scripts/
 │   ├── build.ps1 / build.sh
-│   ├── package-windows.ps1      # NSIS installer
+│   ├── package-windows.ps1      # NSIS installer (makensis otomatik bulunur)
 │   ├── package-macos.sh         # DMG
-│   ├── package-linux.sh         # tar.gz + AppImage
+│   ├── package-linux.sh         # tar.gz + AppImage (--appimage-extract-and-run CI)
 │   ├── generate_icons.py
 │   └── installer/windows.nsi
-├── s3manager.spec
+├── start.sh                     # venv + pip + python src/main.py (Git Bash/WSL)
+├── s3manager.spec               # PySide6 collect_all YOK; QtWidgets only
 ```
 
 ## Kritik dosyalar
 
 | Dosya | Amaç |
 |-------|------|
-| `main_window.py` | UI koordinasyon, QThread workers |
+| `main_window.py` | UI koordinasyon, QThread workers, `_stop_list_worker` / `_detach_list_worker` |
 | `models.py` | `FileModel`: `append_items`, `canFetchMore`, ACL lazy |
 | `spaces_client.py` | `list_objects_page`, upload/download/delete |
 | `upload_service.py` | Multipart upload, progress callbacks |
@@ -74,7 +75,7 @@ S3MANAGER/
 
 ## Geliştirme kısıtları
 
-1. **Threading:** UI ana thread; ağ IO worker'da. UI güncelleme → Signal/Slot. `thread.terminate()` kullanma → `requestInterruption()`.
+1. **Threading:** UI ana thread; ağ IO worker'da. UI güncelleme → Signal/Slot. `thread.terminate()` kullanma → `requestInterruption()`. Liste worker navigasyonda `_detach_list_worker` ile sinyaller koparılır; stale callback guard (`sender() is _list_worker`).
 2. **Listeleme:** `list_objects_page()` sayfa sayfa; `FileModel.append_items()` — `beginResetModel` ile binlerce satırı tek seferde yükleme.
 3. **Multipart eşiği:** 100 MB (`helpers.MULTIPART_THRESHOLD_MB` ve `TransferConfig`).
 4. **ACL listelemede çekilmez** — `AttributeWorker` görünür satırlarda lazy load.
@@ -99,8 +100,12 @@ S3MANAGER/
 
 ## Çalıştırma
 
-`python src/main.py` (venv aktif)
+`./start.sh` (Git Bash/WSL) veya `python src/main.py` (venv aktif)
 
 ## Derleme (onedir)
 
-`scripts/build.ps1` (Windows) veya `scripts/build.sh` (Linux/macOS). Çıktı: `dist/S3MANAGER/` klasörü (exe + `_internal/`) ve `dist/S3MANAGER.zip`. Frozen'da `paths.is_frozen()` → `sys._MEIPASS`; kullanıcı verisi `~/.s3manager/`.
+`scripts/build.ps1` (Windows) veya `scripts/build.sh` (Linux/macOS). Çıktı: `dist/S3MANAGER/` klasörü (exe + `_internal/`) ve `dist/S3MANAGER.zip`. `s3manager.spec` içinde `collect_all("PySide6")` kullanılmaz. Frozen'da `paths.is_frozen()` → `sys._MEIPASS`; kullanıcı verisi `~/.s3manager/`.
+
+## Release
+
+`git tag v0.0.4 && git push origin v0.0.4` → `.github/workflows/release.yml` (Windows NSIS/choco, Linux AppImage/FUSE, macOS DMG).

@@ -5,9 +5,10 @@
 **DigitalOcean Spaces ve diğer S3 destekli depolama servisleri için cross-platform masaüstü dosya yöneticisi**
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/bahadirdogru/S3MANAGER?label=release)](https://github.com/bahadirdogru/S3MANAGER/releases)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](https://github.com/)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](https://github.com/bahadirdogru/S3MANAGER/releases)
 
 [Özellikler](#özellikler) · [Kurulum](#kurulum) · [Roadmap](#roadmap) · [Kullanım](#kullanım) · [Dağıtım](#dağıtım) · [Dökümantasyon](#dökümantasyon)
 
@@ -80,8 +81,22 @@ Bu proje [Bahadır Doğru](https://bahadirdogru.com) tarafından **S3MANAGER** a
 
 ## Kurulum
 
+### Kaynak koddan (geliştirme)
+
+**Hızlı başlangıç** (Linux/macOS/Git Bash):
+
 ```bash
-git clone <repository-url>
+git clone https://github.com/bahadirdogru/S3MANAGER.git
+cd S3MANAGER
+./start.sh
+```
+
+`start.sh` venv oluşturur, bağımlılıkları kurar ve uygulamayı başlatır. Windows'ta Git Bash veya WSL kullanın.
+
+**Manuel kurulum:**
+
+```bash
+git clone https://github.com/bahadirdogru/S3MANAGER.git
 cd S3MANAGER
 python -m venv venv
 venv\Scripts\activate          # Windows
@@ -93,6 +108,10 @@ python src/main.py
 İlk çalıştırmada **Bağlan** ile Key, Secret, Bölge, Endpoint ve Bucket girin. Bilgiler `~/.s3manager/config.ini` dosyasına kaydedilir.
 
 > **Not:** Daha önce eski sürüm kullandıysanız `~/.pydamlaspace/` klasöründeki ayarlar ilk çalıştırmada otomatik olarak `~/.s3manager/` konumuna taşınır.
+
+### Binary (son kullanıcı)
+
+Python kurmadan kullanmak için [Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından platformunuza uygun dosyayı indirin (aşağıdaki [Releases](#releases) bölümüne bakın).
 
 ## Roadmap
 
@@ -125,13 +144,13 @@ S3 uyumlu depolama (boto3) için önceliklendirilmiş geliştirme planı. Maddel
 
 ## Releases
 
-En son sürümü [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz.
+En son sürüm: **[v0.0.4](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.4)** — [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz.
 
 | Platform | Dosya |
 |----------|-------|
-| Windows | `S3MANAGER-x.x.x-windows-setup.exe` (NSIS installer) veya `*-windows-portable.zip` |
-| macOS (Apple Silicon) | `S3MANAGER-x.x.x-macos-arm64.dmg` |
-| Linux x86_64 | `S3MANAGER-x.x.x-linux-x86_64.tar.gz` veya `.AppImage` |
+| Windows | `S3MANAGER-0.0.4-windows-setup.exe` (NSIS installer) veya `S3MANAGER-0.0.4-windows-portable.zip` |
+| macOS (Apple Silicon) | `S3MANAGER-0.0.4-macos-arm64.dmg` |
+| Linux x86_64 | `S3MANAGER-0.0.4-linux-x86_64.tar.gz` veya `S3MANAGER-0.0.4-linux-x86_64.AppImage` |
 
 Uygulama açılışında GitHub Releases üzerinden otomatik güncelleme kontrolü yapılır. **Yardım → Güncellemeleri Kontrol Et** ile manuel kontrol de mümkündür. Yeni sürüm bulunursa indirme sayfası tarayıcıda açılır.
 
@@ -140,11 +159,13 @@ Uygulama açılışında GitHub Releases üzerinden otomatik güncelleme kontrol
 ### Geliştiriciler için release
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+# src/version.py sürümünü güncelle, commit et
+git tag v0.0.4
+git push origin main
+git push origin v0.0.4
 ```
 
-Tag push edildiğinde GitHub Actions otomatik olarak 3 platformda build alır ve Release oluşturur.
+`v*.*.*` tag push edildiğinde GitHub Actions otomatik olarak Windows, macOS ve Linux'ta build alır ve [GitHub Release](https://github.com/bahadirdogru/S3MANAGER/releases) oluşturur.
 
 ## Dağıtım (yerel derleme)
 
@@ -152,14 +173,14 @@ PyInstaller **onedir** ile hedef platformda yerel derleme gerekir (cross-compile
 
 | Platform | Komut | Çıktı |
 |----------|-------|-------|
-| Windows | `.\scripts\package-windows.ps1 -Version 0.1.0` | NSIS installer + portable zip |
-| macOS | `./scripts/package-macos.sh 0.1.0` | `.dmg` |
-| Linux | `./scripts/package-linux.sh 0.1.0` | `.tar.gz` + `.AppImage` |
+| Windows | `.\scripts\package-windows.ps1 -Version 0.0.4` | NSIS installer + portable zip |
+| macOS | `./scripts/package-macos.sh 0.0.4` | `.dmg` |
+| Linux | `./scripts/package-linux.sh 0.0.4` | `.tar.gz` + `.AppImage` |
 | Tümü (sadece build) | `.\scripts\build.ps1` / `./scripts/build.sh` | `dist/S3MANAGER/` |
 
-Windows paketleme için [NSIS](https://nsis.sourceforge.io/) kurulu olmalıdır — resmi siteden indirip kurun; `makensis` komutunun PATH'te olduğundan emin olun. İkon üretimi: `python scripts/generate_icons.py` (Pillow gerekir).
+Windows paketleme için [NSIS](https://nsis.sourceforge.io/) kurulu olmalıdır (`makensis` PATH'te veya Chocolatey ile `choco install nsis`). CI ortamında NSIS Chocolatey üzerinden kurulur. İkon üretimi: `python scripts/generate_icons.py` (Pillow gerekir).
 
-Script'ler venv oluşturur, `requirements.txt` + `requirements-dev.txt` kurar ve `s3manager.spec` ile derler. Dağıtım için tüm `S3MANAGER/` klasörünü veya installer/release dosyasını paylaşın; yalnızca exe/binary dosyası yeterli değildir (`_internal/` içindeki DLL ve kütüphaneler gerekir).
+`s3manager.spec` yalnızca QtWidgets için gerekli PySide6 modüllerini paketler (`collect_all` kullanılmaz). Script'ler venv oluşturur, `requirements.txt` + `requirements-dev.txt` kurar ve PyInstaller ile derler.
 
 **Bilinen kısıtlar:** Windows Defender / macOS Gatekeeper imzasız binary uyarısı verebilir.
 
@@ -172,7 +193,7 @@ Script'ler venv oluşturur, `requirements.txt` + `requirements-dev.txt` kurar ve
 
 ### Dosya gezgini
 
-- Klasöre çift tıklayın; üstte breadcrumb ile gezinin
+- Klasöre çift tıklayın; üstte breadcrumb ile gezinin (geri dönüşte liste önbelleği kullanılır)
 - **← Geri**, **Yenile**, sütun başlığına tıklayarak sıralama
 - Ctrl/Shift ile çoklu seçim; sağ tık menüsü
 

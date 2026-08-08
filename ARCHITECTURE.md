@@ -48,6 +48,8 @@ S3MANAGER, DigitalOcean Spaces ile etkileşim için PySide6 tabanlı bir masaüs
 
 Ana pencere; toolbar, breadcrumb, dosya listesi ve tüm worker'ları koordine eder.
 
+Navigasyon (`navigate_to`, breadcrumb, geri) sırasında önceki `SpacesWorker` durdurulur ve sinyalleri koparılır (`_stop_list_worker`, `_detach_list_worker`). Cache hit'te stale callback'lerin modeli bozmaması için `on_page_loaded` / `on_list_finished` içinde `sender() is _list_worker` kontrolü yapılır.
+
 **Worker sınıfları (aynı dosyada):**
 
 | Worker | Görev |
@@ -113,11 +115,12 @@ LoginDialog → validators → SpacesClient.test_connection()
 ### Sayfalı listeleme (lazy loading)
 
 ```
-refresh_list → ListingCache.get (hit → anında göster)
+refresh_list → _stop_list_worker (önceki worker sinyalleri kopar)
+            → ListingCache.get (hit → model.set_items, return)
             → SpacesWorker (miss)
                   → list_objects_page() [sayfa 1..N]
-                  → page_loaded → FileModel.append_items()
-                  → finished → ListingCache.put()
+                  → page_loaded → FileModel.append_items()  [stale guard]
+                  → finished → ListingCache.put(worker prefix)  [stale guard]
             → AttributeWorker → get_object_acl (görünür satırlar)
 ```
 
@@ -168,6 +171,15 @@ ShareDialog → ShareService.share_to_clipboard() → presigned URL → pypercli
 - Servislerde try/except; UI'da `QMessageBox`
 - Worker'larda `error` signal
 - Tüm hatalar `app.log` (RotatingFileHandler, 10MB, 5 yedek)
+
+## CI / Release
+
+| Workflow | Tetikleyici | Çıktı |
+|----------|-------------|-------|
+| `ci.yml` | push/PR `main` | Matrix build (win/linux/mac), artifact 7 gün |
+| `release.yml` | tag `v*.*.*` | Windows (NSIS+zip), macOS (dmg), Linux (tar.gz+AppImage) → GitHub Release |
+
+PyInstaller `s3manager.spec`: yalnızca QtWidgets; `collect_all("PySide6")` kullanılmaz. Windows NSIS: Chocolatey + `makensis` PATH. Linux AppImage: `--appimage-extract-and-run` (CI'da FUSE gerekmez).
 
 ## Bağımlılıklar
 

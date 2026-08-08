@@ -16,6 +16,15 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-08 — v0.0.4 yayınlandı
+
+- **Ne:** İlk başarılı çoklu platform GitHub Release
+- **İçerik:** Breadcrumb cache düzeltmesi, `start.sh`, CI/release pipeline düzeltmeleri
+- **Binary'ler:** Windows setup/portable, macOS arm64 dmg, Linux tar.gz + AppImage
+- **Kaynak:** [v0.0.4 release](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.4)
+
+---
+
 ## 2026-08-08 — v0.0.4 Windows NSIS PATH düzeltmesi
 
 - **Ne:** Release Windows job'unda `makensis` bulunamadi hatasi
