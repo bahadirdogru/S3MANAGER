@@ -1,10 +1,13 @@
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller spec — S3MANAGER onedir (Windows / Linux / macOS)."""
+import sys
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_all, collect_submodules
 
 project_root = Path(SPECPATH)
+icon_ico = project_root / "assets" / "icon.ico"
+icon_icns = project_root / "assets" / "icon.icns"
 
 block_cipher = None
 
@@ -17,6 +20,7 @@ hiddenimports = [
     "boto3",
     "botocore",
     "pyperclip",
+    "packaging",
 ]
 
 for package in ("PySide6",):
@@ -46,6 +50,8 @@ a = Analysis(
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+exe_icon = str(icon_ico) if icon_ico.exists() else None
+
 exe = EXE(
     pyz,
     a.scripts,
@@ -64,6 +70,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=exe_icon,
 )
 
 coll = COLLECT(
@@ -76,3 +83,11 @@ coll = COLLECT(
     upx_exclude=[],
     name="S3MANAGER",
 )
+
+if sys.platform == "darwin" and icon_icns.exists():
+    app = BUNDLE(
+        coll,
+        name="S3MANAGER.app",
+        icon=str(icon_icns),
+        bundle_identifier="com.bahadirdogru.s3manager",
+    )

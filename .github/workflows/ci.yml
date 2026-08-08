@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Generate macOS icon
+        if: runner.os == 'macOS'
+        run: |
+          ICONSET="assets/icon.iconset"
+          rm -rf "$ICONSET"
+          mkdir -p "$ICONSET"
+          for size in 16 32 128 256 512; do
+            d=$((size * 2))
+            sips -z "$size" "$size" assets/icon.png --out "${ICONSET}/icon_${size}x${size}.png"
+            sips -z "$d" "$d" assets/icon.png --out "${ICONSET}/icon_${size}x${size}@2x.png"
+          done
+          iconutil -c icns "$ICONSET" -o assets/icon.icns
+          rm -rf "$ICONSET"
+
+      - name: Build with PyInstaller
+        run: pyinstaller s3manager.spec --clean --noconfirm
+
+      - name: Verify Windows output
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist\S3MANAGER\S3MANAGER.exe")) {
+            Write-Error "S3MANAGER.exe not found"
+          }
+
+      - name: Verify Linux output
+        if: runner.os == 'Linux'
+        run: test -f dist/S3MANAGER/S3MANAGER
+
+      - name: Verify macOS output
+        if: runner.os == 'macOS'
+        run: test -d dist/S3MANAGER.app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: s3manager-${{ matrix.os }}
+          path: dist/
+          retention-days: 7

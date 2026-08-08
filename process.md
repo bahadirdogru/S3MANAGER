@@ -16,6 +16,19 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-08 — CI/CD, installer ve güncelleme kontrolü
+
+- **Ne:** GitHub Actions CI/release; Windows NSIS, macOS DMG, Linux tar.gz+AppImage; GitHub Releases güncelleme bildirimi
+- **Nasıl:**
+  - `.github/workflows/ci.yml` — matrix build (win/linux/mac)
+  - `.github/workflows/release.yml` — `v*.*.*` tag → 5 asset GitHub Release
+  - `scripts/package-*.ps1/sh`, `scripts/installer/windows.nsi`
+  - `src/services/update_service.py` — Releases API; MainWindow Yardım menüsü
+  - `src/version.py` — surum + `GITHUB_REPO`
+- **Dosyalar:** `.github/`, `scripts/`, `src/version.py`, `src/services/update_service.py`, `assets/`, `README.md`, `LLM.md`
+
+---
+
 ## 2026-08-08 — S3MANAGER rebrand ve açık kaynak
 
 - **Ne:** Proje adı pyDamlaSpace → S3MANAGER; GPL-3 lisans, README yenileme, config dizini `~/.s3manager/`

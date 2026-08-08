@@ -4,12 +4,12 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 
-from PySide6.QtCore import Qt, QThread, Signal, Slot, QItemSelectionModel, QTimer
-from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtCore import Qt, QThread, Signal, Slot, QItemSelectionModel, QTimer, QUrl
+from PySide6.QtGui import QKeySequence, QShortcut, QDesktopServices
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QTreeView, QHeaderView,
-    QFrame, QMenu, QMessageBox, QFileDialog,
+    QFrame, QMenu, QMessageBox, QFileDialog, QMenuBar,
 )
 
 from src.ui.qt.models import FileModel
@@ -20,6 +20,9 @@ from src.services.share_service import ShareService
 from src.services.upload_service import UploadService
 from src.services.listing_cache import ListingCache
 from src.config.credentials import CredentialsManager
+from src.config.settings import Settings
+from src.services.update_service import fetch_latest_release, is_newer_version, ReleaseInfo
+from src.version import __version__
 from src.utils.helpers import join_path
 from src.utils.logging_config import get_logger
 
@@ -32,6 +35,24 @@ MAX_DOWNLOAD_WORKERS = 3
 WORKER_STOP_TIMEOUT_MS = 60000
 SHUTDOWN_WORKER_WAIT_MS = 2500
 PROGRESS_EMIT_INTERVAL_S = 0.15
+UPDATE_CHECK_DELAY_MS = 3000
+
+
+class UpdateCheckWorker(QThread):
+    """Check GitHub Releases for a newer version."""
+    update_available = Signal(object)
+    up_to_date = Signal()
+    check_failed = Signal(str)
+
+    def run(self):
+        try:
+            release = fetch_latest_release()
+            if is_newer_version(release.version):
+                self.update_available.emit(release)
+            else:
+                self.up_to_date.emit()
+        except Exception as e:
+            self.check_failed.emit(str(e))
 
 
 class SpacesWorker(QThread):
@@ -369,10 +390,11 @@ class ParallelUploadWorker(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("S3MANAGER - DigitalOcean Spaces")
+        self.setWindowTitle(f"S3MANAGER {__version__} - DigitalOcean Spaces")
         self.resize(1100, 750)
 
         self.credentials_manager = CredentialsManager()
+        self.settings = Settings()
         self.listing_cache = ListingCache()
         self.spaces_client = None
         self.share_service = None
@@ -391,11 +413,20 @@ class MainWindow(QMainWindow):
         self._loading_folders = []
         self._loading_files = []
         self._list_prefix = ''
+        self._update_worker = None
 
+        self.setup_menu_bar()
         self.init_ui()
         self.apply_styles()
         self.setup_shortcuts()
         self.auto_connect()
+        QTimer.singleShot(UPDATE_CHECK_DELAY_MS, lambda: self.check_for_updates(manual=False))
+
+    def setup_menu_bar(self):
+        menubar = QMenuBar(self)
+        help_menu = menubar.addMenu("Yardım")
+        help_menu.addAction("Güncellemeleri Kontrol Et", lambda: self.check_for_updates(manual=True))
+        self.setMenuBar(menubar)
 
     def init_ui(self):
         central = QWidget()
@@ -1206,6 +1237,64 @@ class MainWindow(QMainWindow):
         self.listing_cache.invalidate(self._prefix_for_api())
         self.lbl_status.setText("Yükleme tamamlandı")
         self.refresh_list(use_cache=False)
+
+    def check_for_updates(self, manual=False):
+        if self._update_worker and self._update_worker.isRunning():
+            return
+        self._update_check_manual = manual
+        self._update_worker = UpdateCheckWorker()
+        self._update_worker.update_available.connect(self._on_update_available)
+        self._update_worker.up_to_date.connect(lambda: self._on_update_up_to_date(manual))
+        self._update_worker.check_failed.connect(lambda err: self._on_update_check_failed(err, manual))
+        self._update_worker.finished.connect(self._on_update_worker_finished)
+        self._update_worker.start()
+
+    @Slot()
+    def _on_update_worker_finished(self):
+        self._update_worker = None
+
+    @Slot(object)
+    def _on_update_available(self, release: ReleaseInfo):
+        dismissed = self.settings.get_dismissed_update_version()
+        if dismissed == release.version:
+            return
+        self._show_update_dialog(release)
+
+    def _on_update_up_to_date(self, manual: bool):
+        if manual:
+            QMessageBox.information(
+                self, "Güncelleme",
+                f"S3MANAGER güncel (v{__version__}).",
+            )
+
+    def _on_update_check_failed(self, error: str, manual: bool):
+        logger.warning(f"Guncelleme kontrolu basarisiz: {error}")
+        if manual:
+            QMessageBox.warning(
+                self, "Güncelleme",
+                "Güncelleme kontrol edilemedi. İnternet bağlantınızı kontrol edin.",
+            )
+
+    def _show_update_dialog(self, release: ReleaseInfo):
+        notes = release.body[:300] + ("..." if len(release.body) > 300 else "")
+        text = f"Yeni sürüm v{release.version} mevcut.\nMevcut sürüm: v{__version__}"
+        if notes:
+            text += f"\n\n{notes}"
+
+        box = QMessageBox(self)
+        box.setWindowTitle("Güncelleme Mevcut")
+        box.setText(text)
+        box.setIcon(QMessageBox.Information)
+        btn_download = box.addButton("İndir", QMessageBox.AcceptRole)
+        btn_later = box.addButton("Daha Sonra", QMessageBox.RejectRole)
+        btn_dismiss = box.addButton("Bu sürümü hatırla", QMessageBox.ActionRole)
+        box.exec()
+
+        clicked = box.clickedButton()
+        if clicked == btn_download:
+            QDesktopServices.openUrl(QUrl(release.html_url))
+        elif clicked == btn_dismiss:
+            self.settings.set_dismissed_update_version(release.version)
 
     def closeEvent(self, event):
         if hasattr(self, 'upload_dlg') and self.upload_dlg:

@@ -2,7 +2,7 @@
 
 # S3MANAGER
 
-**DigitalOcean Spaces için cross-platform masaüstü dosya yöneticisi**
+**DigitalOcean Spaces ve diğer S3 destekli depolama servisleri için cross-platform masaüstü dosya yöneticisi**
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
@@ -94,16 +94,43 @@ python src/main.py
 
 > **Not:** Daha önce eski sürüm kullandıysanız `~/.pydamlaspace/` klasöründeki ayarlar ilk çalıştırmada otomatik olarak `~/.s3manager/` konumuna taşınır.
 
-## Dağıtım
+## Releases
+
+En son sürümü [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz.
+
+| Platform | Dosya |
+|----------|-------|
+| Windows | `S3MANAGER-x.x.x-windows-setup.exe` (NSIS installer) veya `*-windows-portable.zip` |
+| macOS (Apple Silicon) | `S3MANAGER-x.x.x-macos-arm64.dmg` |
+| Linux x86_64 | `S3MANAGER-x.x.x-linux-x86_64.tar.gz` veya `.AppImage` |
+
+Uygulama açılışında GitHub Releases üzerinden otomatik güncelleme kontrolü yapılır. **Yardım → Güncellemeleri Kontrol Et** ile manuel kontrol de mümkündür. Yeni sürüm bulunursa indirme sayfası tarayıcıda açılır.
+
+> **Not:** Binary'ler kod imzalı değildir; Windows Defender / macOS Gatekeeper uyarısı verebilir.
+
+### Geliştiriciler için release
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Tag push edildiğinde GitHub Actions otomatik olarak 3 platformda build alır ve Release oluşturur.
+
+## Dağıtım (yerel derleme)
 
 PyInstaller **onedir** ile hedef platformda yerel derleme gerekir (cross-compile yok).
 
 | Platform | Komut | Çıktı |
 |----------|-------|-------|
-| Windows | `.\scripts\build.ps1` | `dist\S3MANAGER\` klasörü + `dist\S3MANAGER.zip` |
-| Linux / macOS | `chmod +x scripts/build.sh && ./scripts/build.sh` | `dist/S3MANAGER/` klasörü + `dist/S3MANAGER.zip` |
+| Windows | `.\scripts\package-windows.ps1 -Version 0.1.0` | NSIS installer + portable zip |
+| macOS | `./scripts/package-macos.sh 0.1.0` | `.dmg` |
+| Linux | `./scripts/package-linux.sh 0.1.0` | `.tar.gz` + `.AppImage` |
+| Tümü (sadece build) | `.\scripts\build.ps1` / `./scripts/build.sh` | `dist/S3MANAGER/` |
 
-Script'ler venv oluşturur, `requirements.txt` + `requirements-dev.txt` kurar ve `s3manager.spec` ile derler. Dağıtım için tüm `S3MANAGER/` klasörünü veya zip arşivini paylaşın; yalnızca exe/binary dosyası yeterli değildir (`_internal/` içindeki DLL ve kütüphaneler gerekir).
+Windows paketleme için [NSIS](https://nsis.sourceforge.io/) gerekir (`choco install nsis`). İkon üretimi: `python scripts/generate_icons.py` (Pillow gerekir).
+
+Script'ler venv oluşturur, `requirements.txt` + `requirements-dev.txt` kurar ve `s3manager.spec` ile derler. Dağıtım için tüm `S3MANAGER/` klasörünü veya installer/release dosyasını paylaşın; yalnızca exe/binary dosyası yeterli değildir (`_internal/` içindeki DLL ve kütüphaneler gerekir).
 
 **Bilinen kısıtlar:** Windows Defender / macOS Gatekeeper imzasız binary uyarısı verebilir.
 

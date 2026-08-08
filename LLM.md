@@ -20,32 +20,34 @@ DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, 
 S3MANAGER/
 ├── src/
 │   ├── main.py
+│   ├── version.py               # __version__, GITHUB_REPO
 │   ├── config/
-│   │   ├── settings.py          # ~/.s3manager/config.ini
+│   │   ├── settings.py          # ~/.s3manager/config.ini (+ updates dismissed)
 │   │   └── credentials.py
 │   ├── ui/qt/
-│   │   ├── main_window.py       # Workers, MainWindow, breadcrumb
-│   │   ├── models.py            # FileModel (lazy append, ACL cache)
-│   │   ├── dialogs.py           # Login, Upload (DropZone, FileList), Share
-│   │   └── styles.py            # WA_* renk sabitleri, get_dark_theme() QSS
+│   │   ├── main_window.py       # Workers, MainWindow, update check, Yardım menüsü
+│   │   ├── models.py
+│   │   ├── dialogs.py
+│   │   └── styles.py
 │   ├── services/
-│   │   ├── spaces_client.py     # boto3 S3 wrapper
+│   │   ├── spaces_client.py
 │   │   ├── upload_service.py
 │   │   ├── share_service.py
-│   │   └── listing_cache.py     # Klasör listesi TTL cache
+│   │   ├── listing_cache.py
+│   │   └── update_service.py    # GitHub Releases API
 │   └── utils/
-│       ├── paths.py             # frozen/geliştirme yolu, get_config_dir, log_file_path
-│       ├── helpers.py
-│       ├── validators.py
-│       └── logging_config.py
-├── s3manager.spec               # PyInstaller onedir spec
-├── requirements-dev.txt         # pyinstaller (build-only)
+├── assets/                      # icon.png, icon.ico, icon.icns (macOS build)
+├── .github/workflows/
+│   ├── ci.yml                   # PR/main matrix build
+│   └── release.yml              # tag → GitHub Release
 ├── scripts/
-│   ├── build.ps1                # Windows derleme
-│   └── build.sh                 # Linux/macOS derleme
-├── requirements.txt
-├── config.example.ini
-└── [README|UI|ARCHITECTURE|LLM|PROCESS].md
+│   ├── build.ps1 / build.sh
+│   ├── package-windows.ps1      # NSIS installer
+│   ├── package-macos.sh         # DMG
+│   ├── package-linux.sh         # tar.gz + AppImage
+│   ├── generate_icons.py
+│   └── installer/windows.nsi
+├── s3manager.spec
 ```
 
 ## Kritik dosyalar

@@ -77,3 +77,27 @@ class Settings:
             'blr1': 'https://blr1.digitaloceanspaces.com'
         }
         return endpoints.get(region, f'https://{region}.digitaloceanspaces.com')
+
+    def get_dismissed_update_version(self) -> Optional[str]:
+        if not self.config_file.exists():
+            return None
+        config = configparser.ConfigParser()
+        config.read(self.config_file)
+        if 'updates' in config:
+            return config['updates'].get('dismissed_version') or None
+        return None
+
+    def set_dismissed_update_version(self, version: str) -> bool:
+        try:
+            config = configparser.ConfigParser()
+            if self.config_file.exists():
+                config.read(self.config_file)
+            if 'updates' not in config:
+                config.add_section('updates')
+            config['updates']['dismissed_version'] = version
+            with open(self.config_file, 'w') as f:
+                config.write(f)
+            return True
+        except Exception as e:
+            logger.error(f"Guncelleme tercihi kaydetme hatasi: {e}")
+            return False
