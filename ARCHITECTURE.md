@@ -129,8 +129,12 @@ refresh_list → _stop_list_worker (önceki worker sinyalleri kopar)
 ```
 UploadDialog.upload_started → ParallelUploadWorker (ThreadPoolExecutor, max 3)
                            → UploadService.upload_file() × N
+                           → object_metadata.build_upload_extra_args() (Content-Type, Content-Disposition, Cache-Control)
+                           → SpacesClient.upload_file(ExtraArgs=...)
                            → progress signals → UploadDialog
 ```
+
+Yükleme metadata ayarları `~/.s3manager/config.ini` `[upload_metadata]` bölümünde; **Ayarlar → Yükleme Metadata...** veya Upload dialog'undaki **Ayarlar...** ile düzenlenir.
 
 ### İndirme
 

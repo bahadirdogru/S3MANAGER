@@ -36,6 +36,8 @@ S3MANAGER/
 │   │   ├── listing_cache.py
 │   │   └── update_service.py    # GitHub Releases API
 │   └── utils/
+│       ├── helpers.py
+│       └── object_metadata.py   # MIME tespiti, upload ExtraArgs
 ├── assets/                      # icon.png, icon.ico, icon.icns (macOS build)
 ├── .github/workflows/
 │   ├── ci.yml                   # PR/main matrix build
@@ -58,10 +60,11 @@ S3MANAGER/
 | `main_window.py` | UI koordinasyon, QThread workers, `_stop_list_worker` / `_detach_list_worker` |
 | `models.py` | `FileModel`: `append_items`, `canFetchMore`, ACL lazy |
 | `spaces_client.py` | `list_objects_page`, upload/download/delete |
-| `upload_service.py` | Multipart upload, progress callbacks |
+| `upload_service.py` | Multipart upload, progress callbacks, metadata ExtraArgs |
+| `object_metadata.py` | `guess_content_type`, `build_upload_extra_args`, `UploadMetadataSettings` |
 | `listing_cache.py` | Prefix bazlı liste cache (TTL 60s) |
-| `dialogs.py` | Login (validators+test_connection), Upload, ShareDialog |
-| `settings.py` | Sadece config.ini; .env yok |
+| `dialogs.py` | Login, Upload, ShareDialog, UploadMetadataSettingsDialog |
+| `settings.py` | config.ini; `[upload_metadata]` okuma/yazma |
 
 ## Workers (QThread)
 
@@ -79,7 +82,7 @@ S3MANAGER/
 2. **Listeleme:** `list_objects_page()` sayfa sayfa; `FileModel.append_items()` — `beginResetModel` ile binlerce satırı tek seferde yükleme.
 3. **Multipart eşiği:** 100 MB (`helpers.MULTIPART_THRESHOLD_MB` ve `TransferConfig`).
 4. **ACL listelemede çekilmez** — `AttributeWorker` görünür satırlarda lazy load.
-5. **Config:** `~/.s3manager/config.ini` düz metin; log `~/.s3manager/app.log`. Eski `~/.pydamlaspace/` otomatik taşınır.
+5. **Config:** `~/.s3manager/config.ini` düz metin; log `~/.s3manager/app.log`. Eski `~/.pydamlaspace/` otomatik taşınır. `[upload_metadata]` — yükleme Content-Type/Disposition/Cache-Control.
 6. **Upload progress:** `progress.lock` içinde `get_progress()` çağırma (deadlock).
 7. **UploadDialog:** Dosya Seç = liste replace; `clear_progress_area()` yeni seçimde.
 8. **Remote key:** Leading `/` olmamalı.

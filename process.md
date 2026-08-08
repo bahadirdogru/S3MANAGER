@@ -16,6 +16,18 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-08 — Yükleme metadata otomatik tespit
+
+- **Ne:** Yüklemede Content-Type, Content-Disposition ve isteğe bağlı Cache-Control otomatik atanıyor
+- **Nası:**
+  - `src/utils/object_metadata.py` — uzantı/MIME tespiti, `build_upload_extra_args`
+  - `Settings.load/save_upload_metadata_settings()` — `[upload_metadata]` config bölümü
+  - `UploadMetadataSettingsDialog` — Ayarlar menüsü ve Upload dialog entegrasyonu
+  - `UploadService` → `SpacesClient.upload_file(extra_args=...)`
+- **Dosyalar:** `object_metadata.py`, `settings.py`, `spaces_client.py`, `upload_service.py`, `dialogs.py`, `main_window.py`, `config.example.ini`
+
+---
+
 ## 2026-08-08 — v0.0.4 yayınlandı
 
 - **Ne:** İlk başarılı çoklu platform GitHub Release

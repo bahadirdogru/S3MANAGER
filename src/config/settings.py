@@ -4,6 +4,12 @@ from pathlib import Path
 from typing import Optional, Dict
 
 from ..utils.logging_config import get_logger
+from ..utils.object_metadata import (
+    UploadMetadataSettings,
+    DEFAULT_INLINE_EXTENSIONS,
+    DEFAULT_ATTACHMENT_EXTENSIONS,
+    parse_extension_list,
+)
 from ..utils.paths import get_config_dir
 
 logger = get_logger('settings')
@@ -100,4 +106,68 @@ class Settings:
             return True
         except Exception as e:
             logger.error(f"Guncelleme tercihi kaydetme hatasi: {e}")
+            return False
+
+    def _read_config(self) -> configparser.ConfigParser:
+        config = configparser.ConfigParser()
+        if self.config_file.exists():
+            config.read(self.config_file)
+        return config
+
+    def _write_config(self, config: configparser.ConfigParser) -> bool:
+        try:
+            with open(self.config_file, 'w') as f:
+                config.write(f)
+            return True
+        except Exception as e:
+            logger.error(f"Config yazma hatasi: {e}")
+            return False
+
+    def load_upload_metadata_settings(self) -> UploadMetadataSettings:
+        """Load upload metadata settings from config.ini."""
+        defaults = UploadMetadataSettings()
+        if not self.config_file.exists():
+            return defaults
+
+        config = self._read_config()
+        if 'upload_metadata' not in config:
+            return defaults
+
+        section = config['upload_metadata']
+        enabled_raw = section.get('enabled', 'true').strip().lower()
+        enabled = enabled_raw in ('1', 'true', 'yes', 'on')
+
+        inline_raw = section.get('inline_extensions', '').strip()
+        attachment_raw = section.get('attachment_extensions', '').strip()
+
+        return UploadMetadataSettings(
+            enabled=enabled,
+            cache_control=section.get('cache_control', '').strip(),
+            text_charset=section.get('text_charset', defaults.text_charset).strip() or 'utf-8',
+            inline_extensions=(
+                parse_extension_list(inline_raw) if inline_raw else set(DEFAULT_INLINE_EXTENSIONS)
+            ),
+            attachment_extensions=(
+                parse_extension_list(attachment_raw)
+                if attachment_raw
+                else set(DEFAULT_ATTACHMENT_EXTENSIONS)
+            ),
+        )
+
+    def save_upload_metadata_settings(self, settings: UploadMetadataSettings) -> bool:
+        """Persist upload metadata settings to config.ini."""
+        try:
+            config = self._read_config()
+            if 'upload_metadata' not in config:
+                config.add_section('upload_metadata')
+
+            section = config['upload_metadata']
+            section['enabled'] = 'true' if settings.enabled else 'false'
+            section['cache_control'] = settings.cache_control
+            section['text_charset'] = settings.text_charset
+            section['inline_extensions'] = settings.inline_extensions_csv()
+            section['attachment_extensions'] = settings.attachment_extensions_csv()
+            return self._write_config(config)
+        except Exception as e:
+            logger.error(f"Upload metadata ayar kaydetme hatasi: {e}")
             return False

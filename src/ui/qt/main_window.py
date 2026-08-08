@@ -14,7 +14,10 @@ from PySide6.QtWidgets import (
 
 from src.ui.qt.models import FileModel
 from src.ui.qt.styles import get_dark_theme
-from src.ui.qt.dialogs import LoginDialog, UploadDialog, DownloadDialog, ShareDialog
+from src.ui.qt.dialogs import (
+    LoginDialog, UploadDialog, DownloadDialog, ShareDialog,
+    UploadMetadataSettingsDialog,
+)
 from src.services.spaces_client import SpacesClient, UploadCancelled
 from src.services.share_service import ShareService
 from src.services.upload_service import UploadService
@@ -277,11 +280,12 @@ class ParallelUploadWorker(QThread):
     file_completed = Signal(str)
     file_error = Signal(str, str)
 
-    def __init__(self, parent, service, files_to_upload, acl):
+    def __init__(self, parent, service, files_to_upload, acl, metadata_settings=None):
         super().__init__(parent)
         self.service = service
         self.files = files_to_upload
         self.acl = acl
+        self.metadata_settings = metadata_settings
         self._progress_lock = threading.Lock()
         self._last_emit_time = {}
         self._pending_progress = {}
@@ -347,7 +351,9 @@ class ParallelUploadWorker(QThread):
             self._emit_progress(
                 file_path, 0.0, 0, 0.0, False, 0, 0, "Başlıyor...", force=True,
             )
-            success = self.service.upload_file(file_path, remote_key, self.acl, local_cb)
+            success = self.service.upload_file(
+                file_path, remote_key, self.acl, local_cb, self.metadata_settings,
+            )
             self._flush_progress(file_path)
             if self.isInterruptionRequested():
                 return
@@ -424,9 +430,18 @@ class MainWindow(QMainWindow):
 
     def setup_menu_bar(self):
         menubar = QMenuBar(self)
+        settings_menu = menubar.addMenu("Ayarlar")
+        settings_menu.addAction(
+            "Yükleme Metadata...",
+            self.show_upload_metadata_settings,
+        )
         help_menu = menubar.addMenu("Yardım")
         help_menu.addAction("Güncellemeleri Kontrol Et", lambda: self.check_for_updates(manual=True))
         self.setMenuBar(menubar)
+
+    def show_upload_metadata_settings(self):
+        dlg = UploadMetadataSettingsDialog(self, self.settings)
+        dlg.exec()
 
     def init_ui(self):
         central = QWidget()
@@ -1253,8 +1268,14 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Uyarı", "Yüklenecek geçerli dosya bulunamadı.")
             return
 
+        metadata_settings = None
+        if self.upload_dlg:
+            metadata_settings = self.upload_dlg.metadata_settings
+        else:
+            metadata_settings = self.settings.load_upload_metadata_settings()
+
         self._upload_worker = ParallelUploadWorker(
-            self, self.upload_service, files_to_upload, acl,
+            self, self.upload_service, files_to_upload, acl, metadata_settings,
         )
         if self.upload_dlg:
             self._upload_worker.file_progress_detailed.connect(

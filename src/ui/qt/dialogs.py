@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QButtonGroup, QFileDialog, QMessageBox,
     QStackedWidget, QListWidget, QListWidgetItem,
     QTreeWidget, QTreeWidgetItem, QAbstractItemView,
-    QApplication,
+    QApplication, QCheckBox,
 )
 from PySide6.QtCore import Qt, Signal, Slot, QTimer
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
@@ -26,6 +26,7 @@ from src.ui.qt.styles import (
 from src.config.settings import Settings
 from src.services.spaces_client import SpacesClient
 from src.utils.helpers import format_file_size
+from src.utils.object_metadata import UploadMetadataSettings, preview_content_type
 from src.utils.validators import (
     validate_spaces_key,
     validate_spaces_secret,
@@ -358,6 +359,128 @@ class DropZoneFrame(QFrame):
         event.acceptProposedAction()
 
 
+class UploadMetadataSettingsDialog(QDialog):
+    """Yükleme metadata ayarları dialogu."""
+
+    def __init__(self, parent=None, settings: Settings = None):
+        super().__init__(parent)
+        self.settings = settings or Settings()
+        self._result_settings: UploadMetadataSettings = self.settings.load_upload_metadata_settings()
+        self.setWindowTitle("Yükleme Metadata Ayarları")
+        self.setObjectName("ElevatedDialog")
+        self.resize(560, 480)
+        self.init_ui()
+        self.apply_styles()
+        self._load_into_form(self._result_settings)
+
+    def init_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(12)
+
+        title = QLabel("Yükleme Metadata Ayarları")
+        title.setStyleSheet("font-size: 18px; font-weight: bold;")
+        layout.addWidget(title)
+
+        hint = QLabel(
+            "Yükleme sırasında Content-Type, Content-Disposition ve isteğe bağlı "
+            "Cache-Control otomatik atanır."
+        )
+        hint.setObjectName("UploadSummaryLabel")
+        hint.setWordWrap(True)
+        layout.addWidget(hint)
+
+        form = QFrame()
+        form.setObjectName("FormFrame")
+        form_layout = QVBoxLayout(form)
+        form_layout.setContentsMargins(16, 16, 16, 16)
+        form_layout.setSpacing(10)
+
+        self.chk_enabled = QCheckBox("Otomatik metadata etkin")
+        form_layout.addWidget(self.chk_enabled)
+
+        form_layout.addWidget(QLabel("Cache-Control (boş = gönderilmez):"))
+        self.entry_cache_control = QLineEdit()
+        self.entry_cache_control.setPlaceholderText("örn. public, max-age=3600")
+        form_layout.addWidget(self.entry_cache_control)
+
+        form_layout.addWidget(QLabel("Metin charset:"))
+        self.entry_charset = QLineEdit()
+        self.entry_charset.setPlaceholderText("utf-8")
+        form_layout.addWidget(self.entry_charset)
+
+        form_layout.addWidget(QLabel("Inline uzantılar (virgülle ayrılmış):"))
+        self.entry_inline = QLineEdit()
+        form_layout.addWidget(self.entry_inline)
+
+        form_layout.addWidget(QLabel("Attachment uzantılar (virgülle ayrılmış):"))
+        self.entry_attachment = QLineEdit()
+        form_layout.addWidget(self.entry_attachment)
+
+        layout.addWidget(form)
+
+        btn_row = QHBoxLayout()
+        self.btn_reset = QPushButton("Varsayılana Dön")
+        self.btn_reset.setObjectName("SecondaryButton")
+        self.btn_reset.clicked.connect(self._reset_defaults)
+        btn_row.addWidget(self.btn_reset)
+        btn_row.addStretch()
+        layout.addLayout(btn_row)
+
+        actions = QHBoxLayout()
+        self.btn_cancel = QPushButton("İptal")
+        self.btn_cancel.setObjectName("SecondaryButton")
+        self.btn_cancel.clicked.connect(self.reject)
+        self.btn_save = QPushButton("Kaydet")
+        self.btn_save.clicked.connect(self._save)
+        actions.addWidget(self.btn_cancel)
+        actions.addStretch()
+        actions.addWidget(self.btn_save)
+        layout.addLayout(actions)
+
+    def apply_styles(self):
+        self.setStyleSheet(get_dark_theme())
+        apply_dialog_elevation(self)
+
+    def _load_into_form(self, s: UploadMetadataSettings):
+        self.chk_enabled.setChecked(s.enabled)
+        self.entry_cache_control.setText(s.cache_control)
+        self.entry_charset.setText(s.text_charset)
+        self.entry_inline.setText(s.inline_extensions_csv())
+        self.entry_attachment.setText(s.attachment_extensions_csv())
+
+    def _reset_defaults(self):
+        self._load_into_form(UploadMetadataSettings())
+
+    def _form_to_settings(self) -> UploadMetadataSettings:
+        from src.utils.object_metadata import parse_extension_list, DEFAULT_INLINE_EXTENSIONS, DEFAULT_ATTACHMENT_EXTENSIONS
+
+        inline_raw = self.entry_inline.text().strip()
+        attachment_raw = self.entry_attachment.text().strip()
+        return UploadMetadataSettings(
+            enabled=self.chk_enabled.isChecked(),
+            cache_control=self.entry_cache_control.text().strip(),
+            text_charset=self.entry_charset.text().strip() or 'utf-8',
+            inline_extensions=(
+                parse_extension_list(inline_raw) if inline_raw else set(DEFAULT_INLINE_EXTENSIONS)
+            ),
+            attachment_extensions=(
+                parse_extension_list(attachment_raw) if attachment_raw else set(DEFAULT_ATTACHMENT_EXTENSIONS)
+            ),
+        )
+
+    def _save(self):
+        new_settings = self._form_to_settings()
+        if not self.settings.save_upload_metadata_settings(new_settings):
+            QMessageBox.warning(self, "Hata", "Ayarlar kaydedilemedi.")
+            return
+        self._result_settings = new_settings
+        self.accept()
+
+    def result_settings(self) -> UploadMetadataSettings:
+        return self._result_settings
+
+
 class UploadFileList(QWidget):
     """Seçilen dosyaları liste veya klasör ağacı olarak gösterir."""
 
@@ -380,10 +503,11 @@ class UploadFileList(QWidget):
 
         self.tree_widget = QTreeWidget()
         self.tree_widget.setObjectName("UploadFileTree")
-        self.tree_widget.setHeaderLabels(["Dosya", "Boyut", ""])
-        self.tree_widget.setColumnWidth(0, 320)
-        self.tree_widget.setColumnWidth(1, 80)
-        self.tree_widget.setColumnWidth(2, 32)
+        self.tree_widget.setHeaderLabels(["Dosya", "Boyut", "Tür", ""])
+        self.tree_widget.setColumnWidth(0, 260)
+        self.tree_widget.setColumnWidth(1, 72)
+        self.tree_widget.setColumnWidth(2, 160)
+        self.tree_widget.setColumnWidth(3, 32)
         self.tree_widget.itemClicked.connect(self._on_tree_clicked)
 
         self.stack.addWidget(self.list_widget)
@@ -408,17 +532,18 @@ class UploadFileList(QWidget):
         self.stack.setVisible(True)
 
     def _on_tree_clicked(self, item, column):
-        if column == 2:
+        if column == 3:
             path = item.data(0, Qt.UserRole)
             if path:
                 self.remove_requested.emit(path)
 
-    def _make_list_row(self, path: str):
+    def _make_list_row(self, path: str, content_type: str = ""):
         name = os.path.basename(path)
         try:
             size = format_file_size(os.path.getsize(path))
         except OSError:
             size = "?"
+        type_hint = f" · {content_type}" if content_type else ""
         item = QListWidgetItem()
         item.setData(Qt.UserRole, path)
 
@@ -426,7 +551,7 @@ class UploadFileList(QWidget):
         row.setObjectName("UploadFileRow")
         row_layout = QHBoxLayout(row)
         row_layout.setContentsMargins(8, 6, 8, 6)
-        lbl = QLabel(f"{name}  ({size})")
+        lbl = QLabel(f"{name}  ({size}){type_hint}")
         lbl.setObjectName("UploadFileRowLabel")
         btn_remove = QPushButton("✕")
         btn_remove.setObjectName("SecondaryButton")
@@ -439,9 +564,10 @@ class UploadFileList(QWidget):
         self.list_widget.addItem(item)
         self.list_widget.setItemWidget(item, row)
 
-    def set_files(self, files: list, folder: str = None):
+    def set_files(self, files: list, folder: str = None, content_types: dict = None):
         self.list_widget.clear()
         self.tree_widget.clear()
+        content_types = content_types or {}
         if not files:
             self._show_empty()
             return
@@ -459,14 +585,15 @@ class UploadFileList(QWidget):
                 except (OSError, ValueError):
                     rel = os.path.basename(path)
                     size = "?"
-                item = QTreeWidgetItem([rel, size, "✕"])
+                ctype = content_types.get(path, "")
+                item = QTreeWidgetItem([rel, size, ctype, "✕"])
                 item.setData(0, Qt.UserRole, path)
                 self.tree_widget.addTopLevelItem(item)
             self.tree_widget.expandAll()
         else:
             self.stack.setCurrentWidget(self.list_widget)
             for path in display:
-                self._make_list_row(path)
+                self._make_list_row(path, content_types.get(path, ""))
 
         if hidden > 0:
             self.lbl_truncated.setText(f"... ve {hidden} dosya daha")
@@ -488,6 +615,8 @@ class UploadDialog(QDialog):
     def __init__(self, parent=None, current_path="/"):
         super().__init__(parent)
         self.current_path = current_path
+        self.settings = Settings()
+        self.metadata_settings = self.settings.load_upload_metadata_settings()
         self.selected_files = []
         self.selected_folder = None
         self.progress_widgets = {}
@@ -562,6 +691,19 @@ class UploadDialog(QDialog):
         acl_row.addWidget(self.rb_public)
         acl_row.addStretch()
         select_layout.addLayout(acl_row)
+
+        metadata_row = QHBoxLayout()
+        self.lbl_metadata_status = QLabel()
+        self.lbl_metadata_status.setObjectName("UploadSummaryLabel")
+        self.btn_metadata_settings = QPushButton("Ayarlar...")
+        self.btn_metadata_settings.setObjectName("SecondaryButton")
+        self.btn_metadata_settings.setFixedHeight(28)
+        self.btn_metadata_settings.clicked.connect(self._open_metadata_settings)
+        metadata_row.addWidget(self.lbl_metadata_status)
+        metadata_row.addStretch()
+        metadata_row.addWidget(self.btn_metadata_settings)
+        select_layout.addLayout(metadata_row)
+        self._update_metadata_status_label()
 
         select_btns = QHBoxLayout()
         self.btn_close_select = QPushButton("Kapat")
@@ -741,6 +883,43 @@ class UploadDialog(QDialog):
     def _acl_label(self) -> str:
         return "🔓 Public" if self.rb_public.isChecked() else "🔒 Private"
 
+    def _preview_remote_key(self, local_path: str) -> str:
+        normalized = os.path.normpath(local_path)
+        if self.selected_folder:
+            try:
+                return os.path.relpath(normalized, self.selected_folder).replace('\\', '/')
+            except ValueError:
+                return os.path.basename(normalized)
+        return os.path.basename(normalized)
+
+    def _content_types_for_files(self, files: list) -> dict:
+        result = {}
+        for path in files:
+            remote_key = self._preview_remote_key(path)
+            ctype = preview_content_type(path, remote_key, self.metadata_settings)
+            if ctype:
+                result[path] = ctype
+        return result
+
+    def _update_metadata_status_label(self):
+        if self.metadata_settings.enabled:
+            self.lbl_metadata_status.setText("Otomatik metadata: Açık")
+        else:
+            self.lbl_metadata_status.setText("Otomatik metadata: Kapalı")
+
+    def _open_metadata_settings(self):
+        dlg = UploadMetadataSettingsDialog(self, self.settings)
+        if dlg.exec() == QDialog.Accepted:
+            self.metadata_settings = dlg.result_settings()
+            self._update_metadata_status_label()
+            if self.selected_files:
+                self.file_list.set_files(
+                    self.selected_files,
+                    self.selected_folder,
+                    self._content_types_for_files(self.selected_files),
+                )
+            self._update_summary()
+
     def _total_size(self) -> int:
         total = 0
         for path in self.selected_files:
@@ -771,7 +950,9 @@ class UploadDialog(QDialog):
         self.selected_files = unique_files
         self.selected_folder = folder
         self.clear_progress_area()
-        self.file_list.set_files(unique_files, folder)
+        self.file_list.set_files(
+            unique_files, folder, self._content_types_for_files(unique_files),
+        )
         self._update_summary()
 
     def _collect_files_from_paths(self, paths: list):
@@ -817,7 +998,11 @@ class UploadDialog(QDialog):
             self.selected_files.remove(path)
         if not self.selected_files:
             self.selected_folder = None
-        self.file_list.set_files(self.selected_files, self.selected_folder)
+        self.file_list.set_files(
+            self.selected_files,
+            self.selected_folder,
+            self._content_types_for_files(self.selected_files),
+        )
         self._update_summary()
 
     def clear_progress_area(self):

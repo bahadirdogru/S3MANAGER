@@ -4,6 +4,7 @@ import threading
 from typing import List, Dict, Callable, Optional, Any
 from .spaces_client import SpacesClient, UploadCancelled
 from ..utils.helpers import should_use_multipart, calculate_multipart_chunk_size
+from ..utils.object_metadata import UploadMetadataSettings, build_upload_extra_args
 from ..utils.logging_config import get_logger
 
 logger = get_logger('upload_service')
@@ -53,7 +54,8 @@ class UploadService:
         return self._shutdown.is_set()
     
     def upload_file(self, local_path: str, remote_key: str, acl: str = 'private',
-                   progress_callback: Optional[Callable[[str, float, int, float, bool, int, int], None]] = None) -> bool:
+                   progress_callback: Optional[Callable[[str, float, int, float, bool, int, int], None]] = None,
+                   metadata_settings: Optional[UploadMetadataSettings] = None) -> bool:
         """
         Upload a single file
         
@@ -80,6 +82,8 @@ class UploadService:
         progress = UploadProgress(filename, file_size)
         with self.upload_lock:
             self.active_uploads[remote_key] = progress
+
+        extra_args = build_upload_extra_args(local_path, remote_key, acl, metadata_settings)
         
         # Track if any callback was called
         callback_was_called = False
@@ -115,12 +119,12 @@ class UploadService:
             if is_multipart:
                 logger.info("_upload_multipart() çağrılıyor")
                 success = self._upload_multipart(
-                    local_path, remote_key, acl, progress, progress_callback
+                    local_path, remote_key, acl, progress, progress_callback, extra_args
                 )
             else:
                 logger.info("_upload_simple() çağrılıyor")
                 success = self._upload_simple(
-                    local_path, remote_key, acl, progress, progress_callback
+                    local_path, remote_key, acl, progress, progress_callback, extra_args
                 )
             logger.info(f"Upload tamamlandı, success={success}: {remote_key}")
             if self._shutdown.is_set():
@@ -168,7 +172,8 @@ class UploadService:
     
     def _upload_simple(self, local_path: str, remote_key: str, acl: str,
                       progress: UploadProgress,
-                      callback: Optional[Callable[[str, float, int, float, bool, int, int], None]]) -> bool:
+                      callback: Optional[Callable[[str, float, int, float, bool, int, int], None]],
+                      extra_args: Optional[dict] = None) -> bool:
         """Simple upload for smaller files"""
         logger.debug("_upload_simple() başladı")
         import time
@@ -277,6 +282,7 @@ class UploadService:
                 result = self.client.upload_file(
                     local_path, remote_key, acl, callback=progress_callback,
                     should_cancel=self._is_cancelled,
+                    extra_args=extra_args,
                 )
                 logger.debug(f"client.upload_file() tamamlandı, result={result}, callback_count={callback_count}")
             except Exception as upload_err:
@@ -345,7 +351,8 @@ class UploadService:
     
     def _upload_multipart(self, local_path: str, remote_key: str, acl: str,
                          progress: UploadProgress,
-                         callback: Optional[Callable[[str, float, int, float, bool, int, int], None]]) -> bool:
+                         callback: Optional[Callable[[str, float, int, float, bool, int, int], None]],
+                         extra_args: Optional[dict] = None) -> bool:
         """
         Multipart upload for large files
         Note: boto3 handles multipart automatically, but we can optimize chunk size
@@ -429,6 +436,7 @@ class UploadService:
             result = self.client.upload_file(
                 local_path, remote_key, acl, callback=progress_callback,
                 should_cancel=self._is_cancelled,
+                extra_args=extra_args,
             )
             
             # If no callbacks were called, send final update

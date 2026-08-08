@@ -47,6 +47,7 @@ Bu proje [Bahadır Doğru](https://bahadirdogru.com) tarafından **S3MANAGER** a
 ### ⬆️ Yükleme
 - Dosya ve klasör yükleme
 - Private / Public ACL
+- Otomatik Content-Type ve Content-Disposition (html, zip, css, js vb.)
 - Multipart (>100 MB)
 - Paralel yükleme (max 3)
 
@@ -202,6 +203,8 @@ Windows paketleme için [NSIS](https://nsis.sourceforge.io/) kurulu olmalıdır 
 1. **Yükle** → Dosya veya Klasör Seç (her seçim listeyi değiştirir)
 2. Private/Public seçin → **Yüklemeyi Başlat**
 3. İlerleme: yüzde, hız, multipart bilgisi
+
+Dosya uzantısına göre **Content-Type** ve **Content-Disposition** otomatik atanır (ör. `.html` tarayıcıda açılır, `.zip` indirilir). Kurallar **Ayarlar → Yükleme Metadata...** veya yükleme dialogundaki **Ayarlar...** ile özelleştirilebilir (`~/.s3manager/config.ini` `[upload_metadata]`).
 
 ### İndirme
 

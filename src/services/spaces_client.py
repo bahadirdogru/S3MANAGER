@@ -182,12 +182,16 @@ class SpacesClient:
         acl: str = 'private',
         callback: Optional[Any] = None,
         should_cancel: Optional[Callable[[], bool]] = None,
+        extra_args: Optional[Dict[str, str]] = None,
     ) -> bool:
         try:
             if should_cancel and should_cancel():
                 return False
 
-            extra_args = {'ACL': 'public-read'} if acl == 'public-read' else {}
+            merged_args: Dict[str, str] = dict(extra_args or {})
+            if acl == 'public-read':
+                merged_args['ACL'] = 'public-read'
+
             file_size = os.path.getsize(local_path)
 
             if file_size < 10 * 1024 * 1024 and callback is None:
@@ -195,7 +199,7 @@ class SpacesClient:
                     return False
                 with open(local_path, 'rb') as f:
                     self.client.put_object(
-                        Bucket=self.bucket, Key=remote_key, Body=f, **extra_args
+                        Bucket=self.bucket, Key=remote_key, Body=f, **merged_args
                     )
                 return True
 
@@ -212,7 +216,7 @@ class SpacesClient:
                 local_path,
                 self.bucket,
                 remote_key,
-                ExtraArgs=extra_args or None,
+                ExtraArgs=merged_args or None,
                 Callback=wrapped_callback if (callback or should_cancel) else None,
                 Config=_TRANSFER_CONFIG,
             )
