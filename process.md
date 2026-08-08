@@ -16,6 +16,14 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-08 — v0.0.2 release
+
+- **Ne:** Breadcrumb cache düzeltmesi, `start.sh` geliştirme ortamı scripti
+- **Nasıl:** `v0.0.2` tag → GitHub Actions release workflow
+- **Dosyalar:** `src/ui/qt/main_window.py`, `src/ui/qt/models.py`, `start.sh`, `src/version.py`
+
+---
+
 ## 2026-08-08 — Breadcrumb cache race condition düzeltmesi
 
 - **Ne:** Breadcrumb ile ileri/geri gezinirken klasör içeriği cache'ten yanlış veya karışık geliyordu
