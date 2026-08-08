@@ -1,4 +1,4 @@
-"""Main window and background workers for pyDamlaSpace."""
+"""Main window and background workers for S3MANAGER."""
 import os
 import threading
 import time
@@ -369,7 +369,7 @@ class ParallelUploadWorker(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("pyDamlaSpace - DigitalOcean Spaces")
+        self.setWindowTitle("S3MANAGER - DigitalOcean Spaces")
         self.resize(1100, 750)
 
         self.credentials_manager = CredentialsManager()

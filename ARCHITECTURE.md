@@ -14,7 +14,7 @@
 
 ## Genel Bakış
 
-pyDamlaSpace, DigitalOcean Spaces ile etkileşim için PySide6 tabanlı bir masaüstü uygulamasıdır. UI, servis ve config katmanları ayrılmıştır; ağ işlemleri worker thread'lerde çalışır.
+S3MANAGER, DigitalOcean Spaces ile etkileşim için PySide6 tabanlı bir masaüstü uygulamasıdır. UI, servis ve config katmanları ayrılmıştır; ağ işlemleri worker thread'lerde çalışır.
 
 ## Mimari Katmanlar
 
@@ -98,7 +98,7 @@ Prefix bazlı klasör listesi cache (TTL 60 saniye). Upload/silme/yenile sonras�
 
 ## Config Katmanı
 
-- **Settings** — `~/.pydamlaspace/config.ini` okuma/yazma
+- **Settings** — `~/.s3manager/config.ini` okuma/yazma
 - **CredentialsManager** — Oturum içi credential cache
 
 ## Veri Akışı
@@ -150,7 +150,7 @@ ShareDialog → ShareService.share_to_clipboard() → presigned URL → pypercli
 
 ## Güvenlik
 
-1. Credentials `~/.pydamlaspace/config.ini` (düz metin, home dizini)
+1. Credentials `~/.s3manager/config.ini` (düz metin, home dizini)
 2. Şifre alanları maskelenir (`QLineEdit.Password`)
 3. ACL: yüklemede kullanıcı seçimi (private/public-read)
 4. Presigned URL: sadece GET, 3/7 gün

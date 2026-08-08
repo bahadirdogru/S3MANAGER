@@ -10,18 +10,18 @@
 >
 > **Bu dosya:** LLM için token-optimize proje yapısı ve geliştirme kısıtları.
 
-# pyDamlaSpace — LLM Rehberi
+# S3MANAGER — LLM Rehberi
 
 DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. **Test yok** — otomatik test kurulmaz.
 
 ## Dizin yapısı
 
 ```
-pydamlaspace/
+S3MANAGER/
 ├── src/
 │   ├── main.py
 │   ├── config/
-│   │   ├── settings.py          # ~/.pydamlaspace/config.ini
+│   │   ├── settings.py          # ~/.s3manager/config.ini
 │   │   └── credentials.py
 │   ├── ui/qt/
 │   │   ├── main_window.py       # Workers, MainWindow, breadcrumb
@@ -34,11 +34,11 @@ pydamlaspace/
 │   │   ├── share_service.py
 │   │   └── listing_cache.py     # Klasör listesi TTL cache
 │   └── utils/
-│       ├── paths.py             # frozen/geliştirme yolu, user_data_dir, log_file_path
+│       ├── paths.py             # frozen/geliştirme yolu, get_config_dir, log_file_path
 │       ├── helpers.py
 │       ├── validators.py
 │       └── logging_config.py
-├── pydamlaspace.spec            # PyInstaller onedir spec
+├── s3manager.spec               # PyInstaller onedir spec
 ├── requirements-dev.txt         # pyinstaller (build-only)
 ├── scripts/
 │   ├── build.ps1                # Windows derleme
@@ -76,7 +76,7 @@ pydamlaspace/
 2. **Listeleme:** `list_objects_page()` sayfa sayfa; `FileModel.append_items()` — `beginResetModel` ile binlerce satırı tek seferde yükleme.
 3. **Multipart eşiği:** 100 MB (`helpers.MULTIPART_THRESHOLD_MB` ve `TransferConfig`).
 4. **ACL listelemede çekilmez** — `AttributeWorker` görünür satırlarda lazy load.
-5. **Config:** `~/.pydamlaspace/config.ini` düz metin; log `~/.pydamlaspace/app.log`.
+5. **Config:** `~/.s3manager/config.ini` düz metin; log `~/.s3manager/app.log`. Eski `~/.pydamlaspace/` otomatik taşınır.
 6. **Upload progress:** `progress.lock` içinde `get_progress()` çağırma (deadlock).
 7. **UploadDialog:** Dosya Seç = liste replace; `clear_progress_area()` yeni seçimde.
 8. **Remote key:** Leading `/` olmamalı.
@@ -101,4 +101,4 @@ pydamlaspace/
 
 ## Derleme (onedir)
 
-`scripts/build.ps1` (Windows) veya `scripts/build.sh` (Linux/macOS). Çıktı: `dist/pyDamlaSpace/` klasörü (exe + `_internal/`) ve `dist/pyDamlaSpace.zip`. Frozen'da `paths.is_frozen()` → `sys._MEIPASS`; kullanıcı verisi `~/.pydamlaspace/`.
+`scripts/build.ps1` (Windows) veya `scripts/build.sh` (Linux/macOS). Çıktı: `dist/S3MANAGER/` klasörü (exe + `_internal/`) ve `dist/S3MANAGER.zip`. Frozen'da `paths.is_frozen()` → `sys._MEIPASS`; kullanıcı verisi `~/.s3manager/`.

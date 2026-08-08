@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "pyDamlaSpace derleniyor (onedir)..."
+echo "S3MANAGER derleniyor (onedir)..."
 
 if [[ ! -f venv/bin/activate ]]; then
   echo "venv bulunamadi. Olusturuluyor..."
@@ -16,18 +16,18 @@ source venv/bin/activate
 
 pip install -q -r requirements.txt -r requirements-dev.txt
 
-pyinstaller pydamlaspace.spec --clean --noconfirm
+pyinstaller s3manager.spec --clean --noconfirm
 
-OUT_DIR="$ROOT/dist/pyDamlaSpace"
-OUT="$OUT_DIR/pyDamlaSpace"
+OUT_DIR="$ROOT/dist/S3MANAGER"
+OUT="$OUT_DIR/S3MANAGER"
 if [[ -f "$OUT" ]]; then
   SIZE=$(du -sh "$OUT_DIR" | cut -f1)
   echo "Basarili: $OUT_DIR ($SIZE)"
-elif [[ -d "$ROOT/dist/pyDamlaSpace.app" ]]; then
-  OUT_DIR="$ROOT/dist/pyDamlaSpace.app"
+elif [[ -d "$ROOT/dist/S3MANAGER.app" ]]; then
+  OUT_DIR="$ROOT/dist/S3MANAGER.app"
   echo "Basarili: $OUT_DIR"
 else
-  echo "Cikti bulunamadi (dist/pyDamlaSpace/pyDamlaSpace veya .app)" >&2
+  echo "Cikti bulunamadi (dist/S3MANAGER/S3MANAGER veya .app)" >&2
   exit 1
 fi
 
@@ -36,14 +36,14 @@ if ! command -v zip >/dev/null 2>&1; then
   exit 1
 fi
 
-ZIP_PATH="$ROOT/dist/pyDamlaSpace.zip"
+ZIP_PATH="$ROOT/dist/S3MANAGER.zip"
 rm -f "$ZIP_PATH"
 (
   cd "$ROOT/dist"
-  if [[ -d pyDamlaSpace ]]; then
-    zip -rq pyDamlaSpace.zip pyDamlaSpace
-  elif [[ -d pyDamlaSpace.app ]]; then
-    zip -rq pyDamlaSpace.zip pyDamlaSpace.app
+  if [[ -d S3MANAGER ]]; then
+    zip -rq S3MANAGER.zip S3MANAGER
+  elif [[ -d S3MANAGER.app ]]; then
+    zip -rq S3MANAGER.zip S3MANAGER.app
   fi
 )
 ZIP_SIZE=$(du -sh "$ZIP_PATH" | cut -f1)

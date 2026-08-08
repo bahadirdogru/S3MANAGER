@@ -4,7 +4,7 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 Set-Location $Root
 
-Write-Host "pyDamlaSpace derleniyor (Windows onedir)..." -ForegroundColor Cyan
+Write-Host "S3MANAGER derleniyor (Windows onedir)..." -ForegroundColor Cyan
 
 if (-not (Test-Path "venv\Scripts\python.exe")) {
     Write-Host "venv bulunamadi. Olusturuluyor..." -ForegroundColor Yellow
@@ -13,14 +13,14 @@ if (-not (Test-Path "venv\Scripts\python.exe")) {
 
 & "venv\Scripts\python.exe" -m pip install -q -r requirements.txt -r requirements-dev.txt
 
-& "venv\Scripts\pyinstaller.exe" pydamlaspace.spec --clean --noconfirm
+& "venv\Scripts\pyinstaller.exe" s3manager.spec --clean --noconfirm
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Derleme basarisiz." -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
-$OutDir = Join-Path $Root "dist\pyDamlaSpace"
-$OutExe = Join-Path $OutDir "pyDamlaSpace.exe"
+$OutDir = Join-Path $Root "dist\S3MANAGER"
+$OutExe = Join-Path $OutDir "S3MANAGER.exe"
 if (-not (Test-Path $OutExe)) {
     Write-Host "Cikti dosyasi bulunamadi: $OutExe" -ForegroundColor Red
     exit 1
@@ -32,7 +32,7 @@ $SizeMb = [math]::Round(
 )
 Write-Host "Basarili: $OutDir ($SizeMb MB)" -ForegroundColor Green
 
-$ZipPath = Join-Path $Root "dist\pyDamlaSpace.zip"
+$ZipPath = Join-Path $Root "dist\S3MANAGER.zip"
 if (Test-Path $ZipPath) {
     Remove-Item $ZipPath -Force
 }

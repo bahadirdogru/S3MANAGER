@@ -1,4 +1,4 @@
-"""Logging configuration for pyDamlaSpace"""
+"""Logging configuration for S3MANAGER"""
 import logging
 import logging.handlers
 from pathlib import Path
@@ -12,7 +12,7 @@ def setup_logging(log_level=logging.INFO, log_file=None):
 
     Args:
         log_level: Logging level (default: INFO)
-        log_file: Path to log file (default: ~/.pydamlaspace/app.log)
+        log_file: Path to log file (default: ~/.s3manager/app.log)
 
     Returns:
         Logger instance
@@ -26,7 +26,7 @@ def setup_logging(log_level=logging.INFO, log_file=None):
     log_file.parent.mkdir(parents=True, exist_ok=True)
     
     # Create root logger
-    logger = logging.getLogger('pydamlaspace')
+    logger = logging.getLogger('s3manager')
     logger.setLevel(log_level)
     
     # Remove existing handlers to avoid duplicates
@@ -70,11 +70,11 @@ def get_logger(name=None):
     Get a logger instance
     
     Args:
-        name: Logger name (default: 'pydamlaspace')
+        name: Logger name (default: 's3manager')
     
     Returns:
         Logger instance
     """
     if name:
-        return logging.getLogger(f'pydamlaspace.{name}')
-    return logging.getLogger('pydamlaspace')
+        return logging.getLogger(f's3manager.{name}')
+    return logging.getLogger('s3manager')

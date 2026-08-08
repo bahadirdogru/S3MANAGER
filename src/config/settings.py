@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional, Dict
 
 from ..utils.logging_config import get_logger
+from ..utils.paths import get_config_dir
 
 logger = get_logger('settings')
 
@@ -12,7 +13,7 @@ class Settings:
     """Manages application settings from config.ini file"""
     
     def __init__(self):
-        self.config_dir = Path.home() / ".pydamlaspace"
+        self.config_dir = get_config_dir()
         self.config_file = self.config_dir / "config.ini"
         
         # Create config directory if it doesn't exist

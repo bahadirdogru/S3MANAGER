@@ -14,7 +14,7 @@ from src.utils.logging_config import setup_logging
 
 logger = setup_logging(log_level=logging.INFO)
 logger.info("=" * 60)
-logger.info("pyDamlaSpace başlatılıyor...")
+logger.info("S3MANAGER başlatılıyor...")
 logger.info("=" * 60)
 
 from src.ui.qt.main_window import MainWindow
@@ -34,7 +34,7 @@ def main():
         logger.info("Uygulama çalışıyor...")
         exit_code = app.exec()
         logger.info("=" * 60)
-        logger.info("pyDamlaSpace kapatılıyor...")
+        logger.info("S3MANAGER kapatılıyor...")
         logger.info("=" * 60)
         sys.exit(exit_code)
     except Exception as e:

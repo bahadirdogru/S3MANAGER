@@ -1,1 +1,1 @@
-"""pyDamlaSpace - DigitalOcean Spaces Desktop Application"""
+"""S3MANAGER - DigitalOcean Spaces Desktop Application"""

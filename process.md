@@ -10,9 +10,21 @@
 >
 > **Bu dosya:** Kronolojik changelog — ne yapıldı, nasıl yapıldı, neden.
 
-# pyDamlaSpace — Changelog
+# S3MANAGER — Changelog
 
 Ters kronolojik sıra. Gelecek işler burada tutulmaz.
+
+---
+
+## 2026-08-08 — S3MANAGER rebrand ve açık kaynak
+
+- **Ne:** Proje adı pyDamlaSpace → S3MANAGER; GPL-3 lisans, README yenileme, config dizini `~/.s3manager/`
+- **Nasıl:**
+  - `s3manager.spec` — PyInstaller onedir spec yeniden adlandırıldı
+  - `src/utils/paths.py` — `get_config_dir()` ile `~/.pydamlaspace/` → `~/.s3manager/` otomatik taşıma
+  - `README.md` — GitHub vitrin tasarımı, yazar/lisans/LLM notları
+  - `LICENSE` — telif bloğu eklendi (Bahadır Doğru, GPL-3)
+- **Dosyalar:** `README.md`, `LICENSE`, `s3manager.spec`, `scripts/`, `src/`, `ARCHITECTURE.md`, `LLM.md`
 
 ---
 
