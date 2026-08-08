@@ -16,6 +16,19 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-08 — CI PyInstaller ve NSIS düzeltmesi
+
+- **Ne:** Release/CI build PyInstaller ve Windows NSIS adimlari basarisiz oluyordu
+- **Neden:** `collect_all("PySide6")` QML/Qt3D modullerini dahil edip eksik plugin DLL hatasi veriyordu; NSIS SourceForge indirmesi CI'da calismiyordu
+- **Nasil:**
+  - `s3manager.spec`: `collect_all` kaldirildi, gereksiz Qt modulleri exclude, UPX kapali
+  - `release.yml`: NSIS kurulumu `choco install nsis` ile
+  - `package-linux.sh`: AppImage CI'da `--appimage-extract-and-run` (FUSE gerektirmez)
+  - `release.yml`: Linux job'a `libfuse2` + `wget` kurulumu
+- **Dosyalar:** `s3manager.spec`, `.github/workflows/release.yml`, `src/version.py`
+
+---
+
 ## 2026-08-08 — v0.0.2 release
 
 - **Ne:** Breadcrumb cache düzeltmesi, `start.sh` geliştirme ortamı scripti

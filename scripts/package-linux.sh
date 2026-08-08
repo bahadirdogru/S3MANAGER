@@ -57,6 +57,7 @@ fi
 
 APPIMAGE_PATH="$ROOT/dist/S3MANAGER-${VERSION}-linux-x86_64.AppImage"
 rm -f "$APPIMAGE_PATH"
-ARCH=x86_64 "$APPIMAGETOOL" "$APPDIR" "$APPIMAGE_PATH"
+# CI runner'larda FUSE yok; --appimage-extract-and-run ile appimagetool calistirilir
+ARCH=x86_64 "$APPIMAGETOOL" --appimage-extract-and-run "$APPDIR" "$APPIMAGE_PATH"
 chmod +x "$APPIMAGE_PATH"
 echo "AppImage: $APPIMAGE_PATH ($(du -sh "$APPIMAGE_PATH" | cut -f1))"

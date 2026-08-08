@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_all, collect_submodules
+from PyInstaller.utils.hooks import collect_submodules
 
 project_root = Path(SPECPATH)
 icon_ico = project_root / "assets" / "icon.ico"
@@ -11,8 +11,6 @@ icon_icns = project_root / "assets" / "icon.icns"
 
 block_cipher = None
 
-datas = []
-binaries = []
 hiddenimports = [
     "PySide6.QtCore",
     "PySide6.QtGui",
@@ -23,25 +21,48 @@ hiddenimports = [
     "packaging",
 ]
 
-for package in ("PySide6",):
-    pkg_datas, pkg_binaries, pkg_hidden = collect_all(package)
-    datas += pkg_datas
-    binaries += pkg_binaries
-    hiddenimports += pkg_hidden
-
 hiddenimports += collect_submodules("botocore")
 hiddenimports = list(dict.fromkeys(hiddenimports))
+
+# collect_all("PySide6") QML/Qt3D dahil tum modulleri toplar ve CI'da
+# eksik QML plugin DLL hatalarina yol acar. QtWidgets icin yerlesik hook'lar yeterli.
+_pyside6_excludes = [
+    "PySide6.QtQml",
+    "PySide6.QtQuick",
+    "PySide6.Qt3DCore",
+    "PySide6.Qt3DRender",
+    "PySide6.Qt3DAnimation",
+    "PySide6.Qt3DExtras",
+    "PySide6.Qt3DInput",
+    "PySide6.Qt3DLogic",
+    "PySide6.QtBluetooth",
+    "PySide6.QtWebEngine",
+    "PySide6.QtWebEngineCore",
+    "PySide6.QtWebEngineWidgets",
+    "PySide6.QtWebSockets",
+    "PySide6.QtMultimedia",
+    "PySide6.QtCharts",
+    "PySide6.QtDataVisualization",
+    "PySide6.QtLocation",
+    "PySide6.QtPositioning",
+    "PySide6.QtSensors",
+    "PySide6.QtSerialPort",
+    "PySide6.QtRemoteObjects",
+    "PySide6.QtScxml",
+    "PySide6.QtPdf",
+    "PySide6.QtPdfWidgets",
+]
 
 a = Analysis(
     [str(project_root / "src" / "main.py")],
     pathex=[str(project_root)],
-    binaries=binaries,
-    datas=datas,
+    binaries=[],
+    datas=[],
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=_pyside6_excludes,
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
@@ -61,7 +82,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
@@ -79,7 +100,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name="S3MANAGER",
 )

@@ -1,4 +1,4 @@
 """Application version and release metadata."""
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 GITHUB_REPO = "bahadirdogru/S3MANAGER"
