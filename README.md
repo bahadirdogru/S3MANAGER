@@ -145,13 +145,13 @@ S3 uyumlu depolama (boto3) için önceliklendirilmiş geliştirme planı. Maddel
 
 ## Releases
 
-En son sürüm: **[v0.0.4](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.4)** — [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz.
+En son sürüm: **[v0.0.5](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.5)** — [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz.
 
 | Platform | Dosya |
 |----------|-------|
-| Windows | `S3MANAGER-0.0.4-windows-setup.exe` (NSIS installer) veya `S3MANAGER-0.0.4-windows-portable.zip` |
-| macOS (Apple Silicon) | `S3MANAGER-0.0.4-macos-arm64.dmg` |
-| Linux x86_64 | `S3MANAGER-0.0.4-linux-x86_64.tar.gz` veya `S3MANAGER-0.0.4-linux-x86_64.AppImage` |
+| Windows | `S3MANAGER-0.0.5-windows-setup.exe` (NSIS installer) veya `S3MANAGER-0.0.5-windows-portable.zip` |
+| macOS (Apple Silicon) | `S3MANAGER-0.0.5-macos-arm64.dmg` |
+| Linux x86_64 | `S3MANAGER-0.0.5-linux-x86_64.tar.gz` veya `S3MANAGER-0.0.5-linux-x86_64.AppImage` |
 
 Uygulama açılışında GitHub Releases üzerinden otomatik güncelleme kontrolü yapılır. **Yardım → Güncellemeleri Kontrol Et** ile manuel kontrol de mümkündür. Yeni sürüm bulunursa indirme sayfası tarayıcıda açılır.
 
@@ -161,9 +161,9 @@ Uygulama açılışında GitHub Releases üzerinden otomatik güncelleme kontrol
 
 ```bash
 # src/version.py sürümünü güncelle, commit et
-git tag v0.0.4
+git tag v0.0.5
 git push origin main
-git push origin v0.0.4
+git push origin v0.0.5
 ```
 
 `v*.*.*` tag push edildiğinde GitHub Actions otomatik olarak Windows, macOS ve Linux'ta build alır ve [GitHub Release](https://github.com/bahadirdogru/S3MANAGER/releases) oluşturur.
@@ -174,9 +174,9 @@ PyInstaller **onedir** ile hedef platformda yerel derleme gerekir (cross-compile
 
 | Platform | Komut | Çıktı |
 |----------|-------|-------|
-| Windows | `.\scripts\package-windows.ps1 -Version 0.0.4` | NSIS installer + portable zip |
-| macOS | `./scripts/package-macos.sh 0.0.4` | `.dmg` |
-| Linux | `./scripts/package-linux.sh 0.0.4` | `.tar.gz` + `.AppImage` |
+| Windows | `.\scripts\package-windows.ps1 -Version 0.0.5` | NSIS installer + portable zip |
+| macOS | `./scripts/package-macos.sh 0.0.5` | `.dmg` |
+| Linux | `./scripts/package-linux.sh 0.0.5` | `.tar.gz` + `.AppImage` |
 | Tümü (sadece build) | `.\scripts\build.ps1` / `./scripts/build.sh` | `dist/S3MANAGER/` |
 
 Windows paketleme için [NSIS](https://nsis.sourceforge.io/) kurulu olmalıdır (`makensis` PATH'te veya Chocolatey ile `choco install nsis`). CI ortamında NSIS Chocolatey üzerinden kurulur. İkon üretimi: `python scripts/generate_icons.py` (Pillow gerekir).

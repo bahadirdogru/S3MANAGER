@@ -16,6 +16,15 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-11 — v0.0.5 yayınlandı
+
+- **Ne:** Yükleme metadata özelliği ile yeni sürüm
+- **İçerik:** Content-Type, Content-Disposition ve Cache-Control otomatik tespit; Ayarlar menüsünden özelleştirilebilir kurallar
+- **Binary'ler:** Windows setup/portable, macOS arm64 dmg, Linux tar.gz + AppImage
+- **Kaynak:** [v0.0.5 release](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.5)
+
+---
+
 ## 2026-08-08 — Yükleme metadata otomatik tespit
 
 - **Ne:** Yüklemede Content-Type, Content-Disposition ve isteğe bağlı Cache-Control otomatik atanıyor

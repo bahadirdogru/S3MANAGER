@@ -12,7 +12,7 @@
 
 # S3MANAGER — LLM Rehberi
 
-DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. Sürüm: **0.0.4** (`src/version.py`). **Test yok** — otomatik test kurulmaz.
+DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. Sürüm: **0.0.5** (`src/version.py`). **Test yok** — otomatik test kurulmaz.
 
 ## Dizin yapısı
 
@@ -111,4 +111,4 @@ S3MANAGER/
 
 ## Release
 
-`git tag v0.0.4 && git push origin v0.0.4` → `.github/workflows/release.yml` (Windows NSIS/choco, Linux AppImage/FUSE, macOS DMG).
+`git tag v0.0.5 && git push origin v0.0.5` → `.github/workflows/release.yml` (Windows NSIS/choco, Linux AppImage/FUSE, macOS DMG).
