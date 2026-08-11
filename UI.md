@@ -14,10 +14,10 @@
 
 ## Tasarım Prensipleri
 
-### Genel Yaklaşım - WhatsApp Inspired Dark (PySide6/Qt 6)
+### Genel Yaklaşım - WhatsApp Inspired (PySide6/Qt 6)
 
 - **Modern ve Minimal**: Temiz, sade, zarif tasarım
-- **WhatsApp Aesthetic**: Siyah arka plan, yeşil vurgular, yüksek kontrast metin
+- **WhatsApp Aesthetic**: Koyu veya açık arka plan, yeşil vurgular, yüksek kontrast metin
 - **Native Performance**: Qt 6 ile GPU hızlandırmalı rendering
 - **Kullanıcı Dostu**: Sezgisel navigasyon ve işlemler
 - **Bilgilendirici**: Kullanıcıya her zaman durum bilgisi
@@ -27,12 +27,12 @@
 
 ## Renk Paleti - WhatsApp Inspired (QSS)
 
-Kaynak: `src/ui/qt/styles.py` — `WA_*` sabitleri ve `get_dark_theme()`.
+Kaynak: `src/ui/qt/styles.py` — `ThemePalette`, `build_stylesheet()`, `apply_app_theme()`.
 
 ### Qt Style Sheets (QSS) Tema
 
-- **Appearance Mode**: Dark (varsayılan)
-- **QSS Theme**: WhatsApp-inspired siyah + yeşil palet
+- **Appearance Mode**: Dark (varsayılan) veya Light — toolbar `ThemeSwitch` (🌙/☀️) ile geçiş; tercih `~/.s3manager/config.ini` `[appearance] theme`
+- **QSS Theme**: WhatsApp-inspired palet; yeşil vurgular her iki modda aynı
 - **Semantik Renkler**:
   - Başarı: `#25D366` (`WA_SUCCESS`)
   - Hata: `#EA0038` (`WA_ERROR`)
@@ -40,20 +40,44 @@ Kaynak: `src/ui/qt/styles.py` — `WA_*` sabitleri ve `get_dark_theme()`.
   - Birincil vurgu: `#00A884` (`WA_GREEN`)
   - Parlak vurgu: `#25D366` (`WA_GREEN_BRIGHT`)
 
-### Widget Renkleri
+### Widget Renkleri (Dark)
 
 - **Primary Buttons**: `#00A884` (`WA_GREEN`)
 - **Secondary Buttons**: `#2A3942` (`WA_BG_HOVER`)
 - **Selected Items**: `#075E54` (`WA_GREEN_DARK`)
-- **Background (ana pencere)**: `#0B141A` (`WA_BG`)
-- **Panel Background**: `#151F26` (`WA_BG_PANEL`)
-- **Dialog Background**: `#1A252D` (`WA_BG_DIALOG`)
-- **Elevated / Kart**: `#243038` (`WA_BG_ELEVATED`)
-- **Border**: `#3A4A54` (`WA_BORDER`)
-- **Border Subtle**: `#2A3942` (`WA_BORDER_SUBTLE`)
-- **Text Primary**: `#E9EDEF` (`WA_TEXT`)
-- **Text Secondary**: `#AEBAC1` (`WA_TEXT_SECONDARY`)
-- **Text Muted**: `#A0ADB4` (`WA_TEXT_MUTED`)
+- **Background (ana pencere)**: `#0B141A`
+- **Panel Background**: `#151F26`
+- **Dialog Background**: `#1A252D`
+- **Elevated / Kart**: `#243038`
+- **Border**: `#3A4A54`
+- **Border Subtle**: `#2A3942`
+- **Text Primary**: `#E9EDEF`
+- **Text Secondary**: `#AEBAC1`
+- **Text Muted**: `#A0ADB4`
+
+### Widget Renkleri (Light)
+
+- **Background (ana pencere)**: `#F0F2F5`
+- **Panel / Dialog**: `#FFFFFF`
+- **Elevated / Kart**: `#F5F6F6`
+- **Hover**: `#E9EDEF`
+- **Text Primary**: `#111B21`
+- **Text Secondary**: `#667781`
+- **Text Muted**: `#8696A0`
+- **Border**: `#D1D7DB`
+- **Border Subtle**: `#E9EDEF`
+
+### ThemeSwitch (toolbar)
+
+Kaynak: `src/ui/qt/theme_switch.py` — toolbar sağ üst, `← Geri` öncesi.
+
+| Özellik | Değer |
+|---------|-------|
+| Boyut | 64×32 px |
+| objectName | `ThemeSwitch` |
+| Thumb | `ThemeSwitchThumb` (28×24 px, yeşil pill) |
+| İkonlar | `ThemeSwitchIcon` — sol 🌙 (koyu), sağ ☀️ (açık) |
+| Davranış | Sol/sağ yarı tıklama veya toggle; `theme_changed` signal |
 
 ### Katman Hiyerarşisi (derinlik)
 

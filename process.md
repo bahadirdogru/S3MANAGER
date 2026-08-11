@@ -16,6 +16,27 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-11 — v0.0.6 yayınlandı
+
+- **Ne:** Koyu / açık tema desteği ile yeni sürüm
+- **İçerik:** Toolbar ay/güneş `ThemeSwitch`; `ThemePalette` tabanlı QSS; tercih `~/.s3manager/config.ini` `[appearance]`
+- **Binary'ler:** Windows setup/portable, macOS arm64 dmg, Linux tar.gz + AppImage
+- **Kaynak:** [v0.0.6 release](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.6)
+
+---
+
+## 2026-08-11 — Koyu / Açık tema (ThemeSwitch)
+
+- **Ne:** Toolbar'da ay/güneş simgeli tema switch; koyu (varsayılan) ve açık mod
+- **Nası:**
+  - `src/ui/qt/styles.py` — `ThemePalette`, `build_stylesheet()`, `apply_app_theme()`; QApplication seviyesinde QSS
+  - `src/ui/qt/theme_switch.py` — `ThemeSwitch` pill toggle widget
+  - `Settings.load/save_theme_mode()` — `[appearance] theme` config
+  - `main_window.py` — toolbar entegrasyonu; dialog'lardan `setStyleSheet` kaldırıldı
+- **Dosyalar:** `styles.py`, `theme_switch.py`, `settings.py`, `main_window.py`, `dialogs.py`, `config.example.ini`, `UI.md`
+
+---
+
 ## 2026-08-11 — v0.0.5 yayınlandı
 
 - **Ne:** Yükleme metadata özelliği ile yeni sürüm

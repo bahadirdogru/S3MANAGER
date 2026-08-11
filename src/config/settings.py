@@ -171,3 +171,26 @@ class Settings:
         except Exception as e:
             logger.error(f"Upload metadata ayar kaydetme hatasi: {e}")
             return False
+
+    def load_theme_mode(self) -> str:
+        """Load appearance theme from config.ini ('dark' or 'light')."""
+        if not self.config_file.exists():
+            return "dark"
+        config = self._read_config()
+        if 'appearance' not in config:
+            return "dark"
+        mode = config['appearance'].get('theme', 'dark').strip().lower()
+        return 'light' if mode == 'light' else 'dark'
+
+    def save_theme_mode(self, mode: str) -> bool:
+        """Persist appearance theme to config.ini."""
+        try:
+            normalized = 'light' if str(mode).strip().lower() == 'light' else 'dark'
+            config = self._read_config()
+            if 'appearance' not in config:
+                config.add_section('appearance')
+            config['appearance']['theme'] = normalized
+            return self._write_config(config)
+        except Exception as e:
+            logger.error(f"Tema ayar kaydetme hatasi: {e}")
+            return False

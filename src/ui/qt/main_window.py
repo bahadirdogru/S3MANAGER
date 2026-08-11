@@ -13,7 +13,8 @@ from PySide6.QtWidgets import (
 )
 
 from src.ui.qt.models import FileModel
-from src.ui.qt.styles import get_dark_theme
+from src.ui.qt.styles import apply_app_theme
+from src.ui.qt.theme_switch import ThemeSwitch
 from src.ui.qt.dialogs import (
     LoginDialog, UploadDialog, DownloadDialog, ShareDialog,
     UploadMetadataSettingsDialog,
@@ -422,8 +423,11 @@ class MainWindow(QMainWindow):
         self._update_worker = None
 
         self.setup_menu_bar()
+        mode = self.settings.load_theme_mode()
+        apply_app_theme(mode, settings=None, persist=False)
         self.init_ui()
-        self.apply_styles()
+        self.theme_switch.set_mode(mode)
+        self.theme_switch.theme_changed.connect(self._on_theme_changed)
         self.setup_shortcuts()
         self.auto_connect()
         QTimer.singleShot(UPDATE_CHECK_DELAY_MS, lambda: self.check_for_updates(manual=False))
@@ -474,6 +478,10 @@ class MainWindow(QMainWindow):
         self.lbl_status.setObjectName("StatusLabel")
         toolbar_layout.addWidget(self.lbl_status)
         toolbar_layout.addStretch()
+
+        self.theme_switch = ThemeSwitch()
+        toolbar_layout.addWidget(self.theme_switch)
+        toolbar_layout.addSpacing(8)
 
         self.btn_back = QPushButton("← Geri")
         self.btn_back.setObjectName("SecondaryButton")
@@ -537,8 +545,8 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence.StandardKey.SelectAll, self, self.select_all)
         QShortcut(QKeySequence("Escape"), self, self.clear_selection)
 
-    def apply_styles(self):
-        self.setStyleSheet(get_dark_theme())
+    def _on_theme_changed(self, mode: str):
+        apply_app_theme(mode, settings=self.settings, persist=True)
 
     def _prefix_for_api(self) -> str:
         prefix = self.current_path[1:] if self.current_path.startswith('/') else self.current_path

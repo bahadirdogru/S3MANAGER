@@ -12,7 +12,7 @@
 
 # S3MANAGER — LLM Rehberi
 
-DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. Sürüm: **0.0.5** (`src/version.py`). **Test yok** — otomatik test kurulmaz.
+DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. Sürüm: **0.0.6** (`src/version.py`). **Test yok** — otomatik test kurulmaz.
 
 ## Dizin yapısı
 
@@ -28,7 +28,8 @@ S3MANAGER/
 │   │   ├── main_window.py       # Workers, MainWindow, update check, Yardım menüsü
 │   │   ├── models.py
 │   │   ├── dialogs.py
-│   │   └── styles.py
+│   │   ├── styles.py            # ThemePalette, build_stylesheet, apply_app_theme
+│   │   └── theme_switch.py      # Toolbar ay/güneş tema toggle
 │   ├── services/
 │   │   ├── spaces_client.py
 │   │   ├── upload_service.py
@@ -64,7 +65,9 @@ S3MANAGER/
 | `object_metadata.py` | `guess_content_type`, `build_upload_extra_args`, `UploadMetadataSettings` |
 | `listing_cache.py` | Prefix bazlı liste cache (TTL 60s) |
 | `dialogs.py` | Login, Upload, ShareDialog, UploadMetadataSettingsDialog |
-| `settings.py` | config.ini; `[upload_metadata]` okuma/yazma |
+| `styles.py` | `ThemePalette`, `apply_app_theme()`, `build_stylesheet()` — QApplication seviyesinde tema |
+| `theme_switch.py` | Toolbar `ThemeSwitch` widget (🌙/☀️) |
+| `settings.py` | config.ini; `[upload_metadata]`, `[appearance] theme` |
 
 ## Workers (QThread)
 
@@ -82,12 +85,13 @@ S3MANAGER/
 2. **Listeleme:** `list_objects_page()` sayfa sayfa; `FileModel.append_items()` — `beginResetModel` ile binlerce satırı tek seferde yükleme.
 3. **Multipart eşiği:** 100 MB (`helpers.MULTIPART_THRESHOLD_MB` ve `TransferConfig`).
 4. **ACL listelemede çekilmez** — `AttributeWorker` görünür satırlarda lazy load.
-5. **Config:** `~/.s3manager/config.ini` düz metin; log `~/.s3manager/app.log`. Eski `~/.pydamlaspace/` otomatik taşınır. `[upload_metadata]` — yükleme Content-Type/Disposition/Cache-Control.
-6. **Upload progress:** `progress.lock` içinde `get_progress()` çağırma (deadlock).
-7. **UploadDialog:** Dosya Seç = liste replace; `clear_progress_area()` yeni seçimde.
-8. **Remote key:** Leading `/` olmamalı.
-9. **Dökümantasyon:** Sadece 5 md dosyası; yeni md oluşturma.
-10. **Changelog:** [PROCESS.md](PROCESS.md).
+5. **Config:** `~/.s3manager/config.ini` düz metin; log `~/.s3manager/app.log`. Eski `~/.pydamlaspace/` otomatik taşınır. `[upload_metadata]` — yükleme Content-Type/Disposition/Cache-Control. `[appearance] theme` — `dark`/`light`.
+6. **Tema:** `apply_app_theme()` → `QApplication.setStyleSheet`; dialog'larda ayrı `setStyleSheet` kullanma; gölge için `apply_dialog_elevation(dark=...)`.
+7. **Upload progress:** `progress.lock` içinde `get_progress()` çağırma (deadlock).
+8. **UploadDialog:** Dosya Seç = liste replace; `clear_progress_area()` yeni seçimde.
+9. **Remote key:** Leading `/` olmamalı.
+10. **Dökümantasyon:** Sadece 5 md dosyası; yeni md oluşturma.
+11. **Changelog:** [PROCESS.md](PROCESS.md).
 
 ## Yeni özellik akışı
 
@@ -111,4 +115,4 @@ S3MANAGER/
 
 ## Release
 
-`git tag v0.0.5 && git push origin v0.0.5` → `.github/workflows/release.yml` (Windows NSIS/choco, Linux AppImage/FUSE, macOS DMG).
+`git tag v0.0.6 && git push origin v0.0.6` → `.github/workflows/release.yml` (Windows NSIS/choco, Linux AppImage/FUSE, macOS DMG).

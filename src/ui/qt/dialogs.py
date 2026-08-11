@@ -16,9 +16,8 @@ from PySide6.QtGui import QDragEnterEvent, QDropEvent
 MAX_DISPLAY_FILES = 200
 PROGRESS_UI_INTERVAL_MS = 150
 from src.ui.qt.styles import (
-    get_dark_theme,
     apply_dialog_elevation,
-    WA_GREEN_BRIGHT,
+    current_theme_mode,
     WA_SUCCESS,
     WA_ERROR,
     WA_WARNING,
@@ -115,8 +114,7 @@ class LoginDialog(QDialog):
         layout.addLayout(btn_layout)
 
     def apply_styles(self):
-        self.setStyleSheet(get_dark_theme())
-        apply_dialog_elevation(self)
+        apply_dialog_elevation(self, dark=(current_theme_mode() == "dark"))
     def on_region_change(self, value):
         endpoint = self.settings.get_default_region_endpoint(value)
         self.entries['endpoint'].setText(endpoint)
@@ -439,8 +437,7 @@ class UploadMetadataSettingsDialog(QDialog):
         layout.addLayout(actions)
 
     def apply_styles(self):
-        self.setStyleSheet(get_dark_theme())
-        apply_dialog_elevation(self)
+        apply_dialog_elevation(self, dark=(current_theme_mode() == "dark"))
 
     def _load_into_form(self, s: UploadMetadataSettings):
         self.chk_enabled.setChecked(s.enabled)
@@ -812,8 +809,7 @@ class UploadDialog(QDialog):
         self.btn_close = self.btn_close_select
 
     def apply_styles(self):
-        self.setStyleSheet(get_dark_theme())
-        apply_dialog_elevation(self)
+        apply_dialog_elevation(self, dark=(current_theme_mode() == "dark"))
 
     def _enter_upload_phase(self):
         self._uploading = True
@@ -1422,8 +1418,7 @@ class DownloadDialog(QDialog):
         root.addWidget(self.phase_stack, stretch=1)
 
     def apply_styles(self):
-        self.setStyleSheet(get_dark_theme())
-        apply_dialog_elevation(self)
+        apply_dialog_elevation(self, dark=(current_theme_mode() == "dark"))
 
     def _populate_items(self):
         self.item_list.set_items(self.items)
@@ -1669,8 +1664,7 @@ class ShareDialog(QDialog):
         btn_layout.addWidget(btn_3)
         btn_layout.addWidget(btn_7)
         layout.addLayout(btn_layout)
-        self.setStyleSheet(get_dark_theme())
-        apply_dialog_elevation(self)
+        apply_dialog_elevation(self, dark=(current_theme_mode() == "dark"))
 
     def _choose(self, days: int):
         self.days = days
