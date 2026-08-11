@@ -176,11 +176,19 @@ ShareDialog → ShareService.share_to_clipboard() → presigned URL → pypercli
 - Worker'larda `error` signal
 - Tüm hatalar `app.log` (RotatingFileHandler, 10MB, 5 yedek)
 
+## Test stratejisi
+
+- **pytest** — unit testler (`tests/unit/`) ve servis testleri (`tests/services/`)
+- **moto** — boto3 S3 çağrıları mock'lanır; gerçek DigitalOcean bağlantısı gerekmez
+- **Coverage** — `pyproject.toml` ile %60 eşik; Qt UI katmanı (`src/ui/*`) ve ağır upload servisi omit
+- **CI** — `test` job (ubuntu) geçmeden PyInstaller build matrix başlamaz
+- GUI testleri bilinçli olarak kapsam dışı
+
 ## CI / Release
 
 | Workflow | Tetikleyici | Çıktı |
 |----------|-------------|-------|
-| `ci.yml` | push/PR `main` | Matrix build (win/linux/mac), artifact 7 gün |
+| `ci.yml` | push/PR `main` | `test` (pytest) → matrix build (win/linux/mac), artifact 7 gün |
 | `release.yml` | tag `v*.*.*` | Windows (NSIS+zip), macOS (dmg), Linux (tar.gz+AppImage) → GitHub Release |
 
 PyInstaller `s3manager.spec`: yalnızca QtWidgets; `collect_all("PySide6")` kullanılmaz. Windows NSIS: Chocolatey + `makensis` PATH. Linux AppImage: `--appimage-extract-and-run` (CI'da FUSE gerekmez).

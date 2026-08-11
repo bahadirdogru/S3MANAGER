@@ -12,12 +12,17 @@
 
 # S3MANAGER — LLM Rehberi
 
-DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. Sürüm: **0.0.6** (`src/version.py`). **Test yok** — otomatik test kurulmaz.
+DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. Sürüm: **0.0.7** (`src/version.py`). **pytest** ile unit + servis testleri (`tests/`).
 
 ## Dizin yapısı
 
 ```
 S3MANAGER/
+├── tests/
+│   ├── conftest.py              # mock_config_dir, spaces_client (moto)
+│   ├── unit/                    # helpers, validators, metadata, cache, settings
+│   └── services/                # SpacesClient (moto mock S3)
+├── pyproject.toml               # pytest + coverage yapılandırması
 ├── src/
 │   ├── main.py
 │   ├── version.py               # __version__, GITHUB_REPO
@@ -103,7 +108,15 @@ S3MANAGER/
 
 ## Bağımlılıklar
 
-`boto3`, `PySide6`, `pyperclip` — `requirements.txt`
+`boto3`, `PySide6`, `pyperclip` — `requirements.txt`  
+Test: `pytest`, `pytest-cov`, `moto[s3]`, `freezegun` — `requirements-dev.txt`
+
+## Test
+
+- `pytest` — `tests/unit/` (saf fonksiyonlar) + `tests/services/` (moto S3)
+- Coverage eşiği %60 — `pyproject.toml`; UI (`src/ui/*`) ve `upload_service` omit
+- CI: `.github/workflows/ci.yml` → `test` job (ubuntu) → `build` matrix
+- GUI testleri yok (`pytest-qt` kullanılmaz)
 
 ## Çalıştırma
 

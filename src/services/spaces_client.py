@@ -335,6 +335,107 @@ class SpacesClient:
         except ClientError as e:
             raise Exception(f"Klasör silinirken hata: {str(e)}")
 
+    @staticmethod
+    def _normalize_key(key: str) -> str:
+        if key.startswith('/'):
+            key = key[1:]
+        return key
+
+    def copy_object(self, source_key: str, dest_key: str) -> bool:
+        try:
+            source_key = self._normalize_key(source_key)
+            dest_key = self._normalize_key(dest_key)
+            copy_source = {'Bucket': self.bucket, 'Key': source_key}
+            self.client.copy_object(
+                Bucket=self.bucket, CopySource=copy_source, Key=dest_key
+            )
+            return True
+        except ClientError as e:
+            raise Exception(f"Kopyalama hatası: {str(e)}")
+
+    def copy_folder_recursive(self, source_prefix: str, dest_prefix: str) -> bool:
+        try:
+            source_prefix = self._normalize_key(source_prefix)
+            dest_prefix = self._normalize_key(dest_prefix)
+            if not source_prefix.endswith('/'):
+                source_prefix += '/'
+            if not dest_prefix.endswith('/'):
+                dest_prefix += '/'
+            if source_prefix == dest_prefix:
+                raise ValueError("Kaynak ve hedef aynı olamaz")
+            if dest_prefix.startswith(source_prefix):
+                raise ValueError("Klasör kendi alt klasörüne kopyalanamaz")
+
+            keys = self.list_all_keys(source_prefix.rstrip('/'))
+            for obj in keys:
+                old_key = obj['key']
+                rel = old_key[len(source_prefix):]
+                new_key = dest_prefix + rel
+                self.copy_object(old_key, new_key)
+
+            try:
+                self.copy_object(source_prefix, dest_prefix)
+            except Exception:
+                pass
+            return True
+        except ClientError as e:
+            raise Exception(f"Klasör kopyalama hatası: {str(e)}")
+
+    def move_object(self, source_key: str, dest_key: str) -> bool:
+        self.copy_object(source_key, dest_key)
+        return self.delete_object(source_key)
+
+    def move_folder_recursive(self, source_prefix: str, dest_prefix: str) -> bool:
+        self.copy_folder_recursive(source_prefix, dest_prefix)
+        return self.delete_folder_recursive(source_prefix)
+
+    def rename_object(self, old_key: str, new_name: str) -> str:
+        old_key = self._normalize_key(old_key)
+        parent = os.path.dirname(old_key)
+        if parent:
+            new_key = f"{parent}/{new_name}"
+        else:
+            new_key = new_name
+        self.move_object(old_key, new_key)
+        return new_key
+
+    def rename_folder(self, old_prefix: str, new_name: str) -> str:
+        old_prefix = self._normalize_key(old_prefix)
+        if not old_prefix.endswith('/'):
+            old_prefix += '/'
+        parent = os.path.dirname(old_prefix.rstrip('/'))
+        if parent:
+            dest_prefix = f"{parent}/{new_name}/"
+        else:
+            dest_prefix = f"{new_name}/"
+        self.move_folder_recursive(old_prefix, dest_prefix)
+        return dest_prefix
+
+    def head_object(self, key: str) -> Dict[str, Any]:
+        try:
+            key = self._normalize_key(key)
+            response = self.client.head_object(Bucket=self.bucket, Key=key)
+            return {
+                'content_type': response.get('ContentType', ''),
+                'content_length': response.get('ContentLength', 0),
+                'last_modified': response.get('LastModified'),
+                'metadata': response.get('Metadata', {}),
+            }
+        except ClientError as e:
+            raise Exception(f"Metadata okuma hatası: {str(e)}")
+
+    def get_object_bytes(self, key: str, max_bytes: int = 5 * 1024 * 1024) -> bytes:
+        try:
+            key = self._normalize_key(key)
+            response = self.client.get_object(
+                Bucket=self.bucket,
+                Key=key,
+                Range=f'bytes=0-{max_bytes - 1}',
+            )
+            return response['Body'].read()
+        except ClientError as e:
+            raise Exception(f"Dosya okuma hatası: {str(e)}")
+
     def create_presigned_url(self, key: str, expiration: int = 3600) -> str:
         try:
             if key.startswith('/'):

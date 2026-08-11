@@ -644,6 +644,51 @@ def build_stylesheet(palette: ThemePalette) -> str:
         background-color: {p.green};
         border-radius: 5px;
     }}
+
+    QFrame#PreviewPanel {{
+        background-color: {p.bg_panel};
+        border-left: 1px solid {p.border_subtle};
+    }}
+
+    QLabel#PreviewTitle {{
+        font-size: 14px;
+        font-weight: bold;
+        color: {p.text};
+    }}
+
+    QLabel#PreviewMeta {{
+        font-size: 12px;
+        color: {p.text_muted};
+    }}
+
+    QLabel#PreviewPlaceholder {{
+        color: {p.text_muted};
+        padding: 16px;
+    }}
+
+    QScrollArea#PreviewScroll {{
+        border: 1px solid {p.border_subtle};
+        border-radius: 8px;
+        background-color: {p.bg_elevated};
+    }}
+
+    QFrame#TransferPanel {{
+        background-color: {p.bg_panel};
+        border-top: 1px solid {p.border_subtle};
+    }}
+
+    QLabel#TransferPanelTitle {{
+        font-size: 12px;
+        font-weight: bold;
+        color: {p.text_muted};
+    }}
+
+    QListWidget#TransferList {{
+        border: 1px solid {p.border_subtle};
+        border-radius: 6px;
+        background-color: {p.bg_elevated};
+        font-size: 11px;
+    }}
     """
 
 

@@ -1669,3 +1669,55 @@ class ShareDialog(QDialog):
     def _choose(self, days: int):
         self.days = days
         self.accept()
+
+
+class DestinationPathDialog(QDialog):
+    """Kopyala/taşı için hedef klasör prefix'i seçimi."""
+
+    def __init__(self, parent=None, title: str = "Hedef Klasör", current_path: str = '/', hint: str = ''):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setObjectName("ElevatedDialog")
+        self.resize(480, 160)
+        self._result_path = ''
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(12)
+
+        lbl = QLabel(hint or "Hedef klasör yolunu girin (ör. folder/subfolder/):")
+        lbl.setWordWrap(True)
+        layout.addWidget(lbl)
+
+        default = current_path if current_path.endswith('/') else current_path + '/'
+        if default == '/':
+            default = ''
+        self.edit_path = QLineEdit(default)
+        self.edit_path.setPlaceholderText("boş = bucket kökü")
+        layout.addWidget(self.edit_path)
+
+        btn_row = QHBoxLayout()
+        btn_cancel = QPushButton("İptal")
+        btn_ok = QPushButton("Tamam")
+        btn_ok.setObjectName("PrimaryButton")
+        btn_cancel.clicked.connect(self.reject)
+        btn_ok.clicked.connect(self._accept)
+        btn_row.addStretch()
+        btn_row.addWidget(btn_cancel)
+        btn_row.addWidget(btn_ok)
+        layout.addLayout(btn_row)
+
+        apply_dialog_elevation(self, dark=(current_theme_mode() == "dark"))
+
+    def _accept(self):
+        path = self.edit_path.text().strip().replace('\\', '/')
+        if path.startswith('/'):
+            path = path[1:]
+        if path and not path.endswith('/'):
+            path += '/'
+        self._result_path = path
+        self.accept()
+
+    @property
+    def destination_prefix(self) -> str:
+        return self._result_path

@@ -4,20 +4,24 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 
-from PySide6.QtCore import Qt, QThread, Signal, Slot, QItemSelectionModel, QTimer, QUrl
+from PySide6.QtCore import Qt, QThread, Signal, Slot, QItemSelectionModel, QTimer, QUrl, QSortFilterProxyModel
 from PySide6.QtGui import QKeySequence, QShortcut, QDesktopServices
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QTreeView, QHeaderView,
     QFrame, QMenu, QMessageBox, QFileDialog, QMenuBar,
+    QLineEdit, QSplitter, QStyle, QInputDialog,
 )
 
 from src.ui.qt.models import FileModel
 from src.ui.qt.styles import apply_app_theme
 from src.ui.qt.theme_switch import ThemeSwitch
+from src.ui.qt.preview_panel import PreviewPanel
+from src.ui.qt.transfer_panel import TransferPanel
+from src.ui.qt.file_tree_view import FileTreeView
 from src.ui.qt.dialogs import (
     LoginDialog, UploadDialog, DownloadDialog, ShareDialog,
-    UploadMetadataSettingsDialog,
+    UploadMetadataSettingsDialog, DestinationPathDialog,
 )
 from src.services.spaces_client import SpacesClient, UploadCancelled
 from src.services.share_service import ShareService
@@ -412,6 +416,11 @@ class MainWindow(QMainWindow):
         self._attr_worker = None
         self._action_worker = None
         self._batch_delete_active = False
+        self._batch_file_op_active = False
+        self._batch_file_op_items = []
+        self._batch_file_op_index = 0
+        self._batch_file_op_kind = ''
+        self._batch_file_op_dest = ''
         self._download_worker = None
         self._upload_worker = None
         self._linger_workers = []
@@ -447,6 +456,12 @@ class MainWindow(QMainWindow):
         dlg = UploadMetadataSettingsDialog(self, self.settings)
         dlg.exec()
 
+    def _make_toolbar_button(self, text: str, icon_role) -> QPushButton:
+        btn = QPushButton(text)
+        btn.setIcon(self.style().standardIcon(icon_role))
+        btn.setFixedHeight(32)
+        return btn
+
     def init_ui(self):
         central = QWidget()
         self.setCentralWidget(central)
@@ -460,20 +475,37 @@ class MainWindow(QMainWindow):
         toolbar_layout = QHBoxLayout(toolbar)
         toolbar_layout.setContentsMargins(15, 0, 15, 0)
 
-        self.btn_connect = QPushButton("🔌 Bağlan")
-        self.btn_upload = QPushButton("📤 Yükle")
-        self.btn_refresh = QPushButton("🔄 Yenile")
-        self.btn_share = QPushButton("🔗 Paylaş")
-        self.btn_download = QPushButton("📥 İndir")
-        for btn in [self.btn_connect, self.btn_upload, self.btn_refresh, self.btn_share, self.btn_download]:
-            btn.setFixedHeight(32)
+        self.btn_connect = self._make_toolbar_button("Bağlan", QStyle.StandardPixmap.SP_ComputerIcon)
+        self.btn_upload = self._make_toolbar_button("Yükle", QStyle.StandardPixmap.SP_ArrowUp)
+        self.btn_refresh = self._make_toolbar_button("Yenile", QStyle.StandardPixmap.SP_BrowserReload)
+        self.btn_share = self._make_toolbar_button("Paylaş", QStyle.StandardPixmap.SP_FileLinkIcon)
+        self.btn_download = self._make_toolbar_button("İndir", QStyle.StandardPixmap.SP_ArrowDown)
+        self.btn_copy = self._make_toolbar_button("Kopyala", QStyle.StandardPixmap.SP_FileDialogContentsView)
+        self.btn_move = self._make_toolbar_button("Taşı", QStyle.StandardPixmap.SP_ArrowForward)
+        self.btn_rename = self._make_toolbar_button("Yeniden Adlandır", QStyle.StandardPixmap.SP_FileDialogDetailedView)
+        for btn in [
+            self.btn_connect, self.btn_upload, self.btn_refresh, self.btn_share,
+            self.btn_download, self.btn_copy, self.btn_move, self.btn_rename,
+        ]:
             toolbar_layout.addWidget(btn)
 
         self.btn_upload.setEnabled(False)
         self.btn_share.setEnabled(False)
         self.btn_download.setEnabled(False)
+        self.btn_copy.setEnabled(False)
+        self.btn_move.setEnabled(False)
+        self.btn_rename.setEnabled(False)
 
-        toolbar_layout.addSpacing(20)
+        toolbar_layout.addSpacing(12)
+        self.search_edit = QLineEdit()
+        self.search_edit.setObjectName("SearchEdit")
+        self.search_edit.setPlaceholderText("Ara…")
+        self.search_edit.setFixedWidth(180)
+        self.search_edit.setFixedHeight(32)
+        self.search_edit.setClearButtonEnabled(True)
+        toolbar_layout.addWidget(self.search_edit)
+
+        toolbar_layout.addSpacing(12)
         self.lbl_status = QLabel("Bağlantı bekleniyor...")
         self.lbl_status.setObjectName("StatusLabel")
         toolbar_layout.addWidget(self.lbl_status)
@@ -500,9 +532,14 @@ class MainWindow(QMainWindow):
         self.breadcrumb_layout.setSpacing(4)
         main_layout.addWidget(breadcrumb_frame)
 
-        self.view = QTreeView()
         self.model = FileModel()
-        self.view.setModel(self.model)
+        self.proxy_model = QSortFilterProxyModel()
+        self.proxy_model.setSourceModel(self.model)
+        self.proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.proxy_model.setFilterKeyColumn(0)
+
+        self.view = FileTreeView()
+        self.view.setModel(self.proxy_model)
         self.view.setAlternatingRowColors(False)
         self.view.setSelectionBehavior(QTreeView.SelectRows)
         self.view.setSelectionMode(QTreeView.ExtendedSelection)
@@ -516,6 +553,7 @@ class MainWindow(QMainWindow):
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.view.customContextMenuRequested.connect(self.show_context_menu)
         self.view.verticalScrollBar().valueChanged.connect(self._on_scroll)
+        self.view.files_dropped.connect(self.on_files_dropped)
 
         header = self.view.header()
         header.setStretchLastSection(False)
@@ -526,7 +564,19 @@ class MainWindow(QMainWindow):
         self.view.setColumnWidth(2, 160)
         self.view.setColumnWidth(3, 50)
 
-        main_layout.addWidget(self.view)
+        self.preview_panel = PreviewPanel()
+        self.preview_panel.setMinimumWidth(220)
+
+        self.splitter = QSplitter(Qt.Horizontal)
+        self.splitter.addWidget(self.view)
+        self.splitter.addWidget(self.preview_panel)
+        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(1, 1)
+        self.splitter.setSizes([720, 280])
+        main_layout.addWidget(self.splitter, 1)
+
+        self.transfer_panel = TransferPanel()
+        main_layout.addWidget(self.transfer_panel)
 
         self.model.request_next_page.connect(self._load_next_page)
 
@@ -536,6 +586,12 @@ class MainWindow(QMainWindow):
         self.btn_download.clicked.connect(self.show_download)
         self.btn_upload.clicked.connect(self.show_upload)
         self.btn_back.clicked.connect(self.go_back)
+        self.btn_copy.clicked.connect(self.copy_selected_items)
+        self.btn_move.clicked.connect(self.move_selected_items)
+        self.btn_rename.clicked.connect(self.rename_selected_item)
+        self.search_edit.textChanged.connect(self.proxy_model.setFilterFixedString)
+        self.preview_panel.download_requested.connect(self.show_download)
+        self.preview_panel.share_requested.connect(self.on_share_clicked)
 
         self.update_breadcrumb()
 
@@ -544,6 +600,9 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence("Del"), self, self.delete_selected_items)
         QShortcut(QKeySequence.StandardKey.SelectAll, self, self.select_all)
         QShortcut(QKeySequence("Escape"), self, self.clear_selection)
+        QShortcut(QKeySequence("F2"), self, self.rename_selected_item)
+        QShortcut(QKeySequence.StandardKey.Copy, self, self.copy_selected_items)
+        QShortcut(QKeySequence.StandardKey.Cut, self, self.move_selected_items)
 
     def _on_theme_changed(self, mode: str):
         apply_app_theme(mode, settings=self.settings, persist=True)
@@ -604,6 +663,7 @@ class MainWindow(QMainWindow):
             self.credentials_manager.update_credentials(creds)
             self.lbl_status.setText(f"Bağlı: {creds.get('bucket', 'Spaces')}")
             self.btn_upload.setEnabled(True)
+            self.preview_panel.set_client(self.spaces_client)
             self.refresh_list()
         except Exception as e:
             self.lbl_status.setText(f"Hata: {str(e)}")
@@ -817,7 +877,8 @@ class MainWindow(QMainWindow):
             bottom = self.view.indexAt(self.view.viewport().rect().bottomLeft())
             if top.isValid() and bottom.isValid():
                 rows = list(range(top.row(), bottom.row() + 1))
-        paths = self.model.file_paths_needing_acl(rows)
+        source_rows = self._proxy_rows_to_source_rows(rows)
+        paths = self.model.file_paths_needing_acl(source_rows)
         if not paths:
             return
         self.model.mark_acl_pending(paths)
@@ -835,36 +896,68 @@ class MainWindow(QMainWindow):
             new_path += '/'
         self.navigate_to(new_path)
 
+    def _proxy_rows_to_source_rows(self, proxy_rows: list[int]) -> list[int]:
+        source_rows = []
+        for row in proxy_rows:
+            proxy_idx = self.proxy_model.index(row, 0)
+            source_idx = self.proxy_model.mapToSource(proxy_idx)
+            if source_idx.isValid():
+                source_rows.append(source_idx.row())
+        return source_rows
+
+    def _source_index(self, index):
+        if not index.isValid():
+            return index
+        return self.proxy_model.mapToSource(index)
+
+    def _item_at(self, index):
+        source_idx = self._source_index(index)
+        if source_idx.isValid():
+            return self.model.get_item(source_idx)
+        return None
+
     def on_item_double_click(self, index):
-        item = self.model.get_item(index)
+        item = self._item_at(index)
         if item and item['type'] == 'folder':
             self.navigate_to(item['path'])
 
     def on_selection_changed(self):
         indexes = self.view.selectionModel().selectedRows()
-        self.btn_share.setEnabled(len(indexes) == 1 and self._single_is_file(indexes))
-        self.btn_download.setEnabled(len(indexes) >= 1)
+        has_selection = len(indexes) >= 1
+        single_file = len(indexes) == 1 and self._single_is_file(indexes)
+        self.btn_share.setEnabled(single_file)
+        self.btn_download.setEnabled(has_selection)
+        self.btn_copy.setEnabled(has_selection and bool(self.spaces_client))
+        self.btn_move.setEnabled(has_selection and bool(self.spaces_client))
+        self.btn_rename.setEnabled(len(indexes) == 1 and bool(self.spaces_client))
         self._schedule_acl_load()
+        if single_file:
+            item = self._item_at(indexes[0])
+            if item and item.get('type') == 'file':
+                self.preview_panel.show_file(item['path'], item['name'])
+            else:
+                self.preview_panel.clear()
+        else:
+            self.preview_panel.clear()
 
     def _single_is_file(self, indexes):
         if len(indexes) != 1:
             return False
-        item = self.model.get_item(indexes[0])
+        item = self._item_at(indexes[0])
         return item and item.get('type') == 'file'
 
     def get_selected_items(self):
         items = []
         for idx in self.view.selectionModel().selectedRows():
-            if idx.isValid():
-                item = self.model.get_item(idx)
-                if item:
-                    items.append(item)
+            item = self._item_at(idx)
+            if item:
+                items.append(item)
         return items
 
     def select_all(self):
         sm = self.view.selectionModel()
-        for row in range(self.model.rowCount()):
-            sm.select(self.model.index(row, 0), QItemSelectionModel.Select | QItemSelectionModel.Rows)
+        for row in range(self.proxy_model.rowCount()):
+            sm.select(self.proxy_model.index(row, 0), QItemSelectionModel.Select | QItemSelectionModel.Rows)
 
     def clear_selection(self):
         self.view.selectionModel().clearSelection()
@@ -1051,9 +1144,17 @@ class MainWindow(QMainWindow):
             )
             self._download_worker.file_completed.connect(self.download_dlg.set_completed)
             self._download_worker.file_error.connect(self.download_dlg.set_error)
+        self._download_worker.file_completed.connect(self._on_download_file_completed)
+        self._download_worker.file_error.connect(self._on_download_file_error)
         self._download_worker.finished.connect(self._on_download_worker_finished)
         self._download_worker.start()
         self.lbl_status.setText(f"İndiriliyor: {len(tasks)} dosya...")
+
+    def _on_download_file_completed(self, local_path: str):
+        self.transfer_panel.add_entry('download', os.path.basename(local_path), 'tamamlandı')
+
+    def _on_download_file_error(self, local_path: str, _msg: str):
+        self.transfer_panel.add_entry('download', os.path.basename(local_path), 'hata')
 
     @Slot()
     def on_download_all_finished(self):
@@ -1090,15 +1191,19 @@ class MainWindow(QMainWindow):
         menu.addAction("Seçimi Bırak", self.clear_selection)
         menu.addSeparator()
         if selected:
+            menu.addAction("Yeniden Adlandır (F2)", self.rename_selected_item)
+            menu.addAction("Kopyala", self.copy_selected_items)
+            menu.addAction("Taşı", self.move_selected_items)
+            menu.addSeparator()
             menu.addAction(f"Seçilenleri Sil ({len(selected)} öğe)", self.delete_selected_items)
             menu.addAction("Seçilenleri İndir" if len(selected) > 1 else "İndir", self.show_download)
             menu.addSeparator()
         if index.isValid():
-            item = self.model.get_item(index)
+            item = self._item_at(index)
             if item and item['type'] == 'file':
                 menu.addAction("Paylaş (3 Gün)", partial(self.share_item, item, 3))
                 menu.addAction("Paylaş (7 Gün)", partial(self.share_item, item, 7))
-            if not selected or len(selected) == 1:
+            if item and (not selected or len(selected) == 1):
                 menu.addAction("Sil", partial(self.delete_item, item))
         else:
             menu.addAction("Yeni Klasör", self.create_folder)
@@ -1119,7 +1224,7 @@ class MainWindow(QMainWindow):
         indexes = self.view.selectionModel().selectedRows()
         if not indexes:
             return
-        item = self.model.get_item(indexes[0])
+        item = self._item_at(indexes[0])
         if not item or item['type'] != 'file':
             return
         dlg = ShareDialog(self, item['name'])
@@ -1147,11 +1252,189 @@ class MainWindow(QMainWindow):
         self.listing_cache.invalidate(self._prefix_for_api())
         self.refresh_list(use_cache=False)
 
+    @staticmethod
+    def _unique_copy_name(name: str, existing: set[str]) -> str:
+        if name not in existing:
+            return name
+        base, ext = os.path.splitext(name)
+        n = 1
+        while True:
+            candidate = f"{base} (kopya {n}){ext}" if ext else f"{base} (kopya {n})"
+            if candidate not in existing:
+                return candidate
+            n += 1
+
+    def _existing_names_in_current_folder(self) -> set[str]:
+        return {item.get('name', '') for item in self.model.items}
+
+    def rename_selected_item(self):
+        if not self.spaces_client:
+            return
+        items = self.get_selected_items()
+        if len(items) != 1:
+            QMessageBox.information(self, "Bilgi", "Yeniden adlandırmak için tek öğe seçin.")
+            return
+        item = items[0]
+        new_name, ok = QInputDialog.getText(
+            self, "Yeniden Adlandır", "Yeni ad:", text=item['name'].rstrip('/'),
+        )
+        if not ok or not new_name or new_name == item['name'].rstrip('/'):
+            return
+        if '/' in new_name or '\\' in new_name:
+            QMessageBox.warning(self, "Uyarı", "Ad içinde / veya \\ kullanılamaz.")
+            return
+        self.lbl_status.setText(f"Yeniden adlandırılıyor: {item['name']}...")
+        if item['type'] == 'folder':
+            func = lambda: self.spaces_client.rename_folder(item['path'], new_name)
+        else:
+            func = lambda: self.spaces_client.rename_object(item['path'], new_name)
+        self._start_action_worker(func, self._on_file_op_finished, self.on_action_error)
+
+    def copy_selected_items(self):
+        if not self.spaces_client:
+            return
+        items = self.get_selected_items()
+        if not items:
+            QMessageBox.information(self, "Bilgi", "Kopyalanacak öğe seçilmedi.")
+            return
+        dlg = DestinationPathDialog(
+            self,
+            title="Kopyala — Hedef Klasör",
+            current_path=self.current_path,
+            hint="Seçili öğeler bu klasöre kopyalanır. Boş bırakırsanız mevcut klasör kullanılır.",
+        )
+        if dlg.exec():
+            dest = dlg.destination_prefix or self._prefix_for_api()
+            self._run_batch_file_op('copy', items, dest)
+
+    def move_selected_items(self):
+        if not self.spaces_client:
+            return
+        items = self.get_selected_items()
+        if not items:
+            QMessageBox.information(self, "Bilgi", "Taşınacak öğe seçilmedi.")
+            return
+        dlg = DestinationPathDialog(
+            self,
+            title="Taşı — Hedef Klasör",
+            current_path=self.current_path,
+            hint="Seçili öğeler bu klasöre taşınır.",
+        )
+        if dlg.exec():
+            dest = dlg.destination_prefix or self._prefix_for_api()
+            self._run_batch_file_op('move', items, dest)
+
+    def _run_batch_file_op(self, kind: str, items: list, dest_prefix: str):
+        if self._batch_file_op_active or self._batch_delete_active:
+            QMessageBox.warning(self, "Uyarı", "Başka bir işlem devam ediyor.")
+            return
+        if self._action_worker and self._action_worker.isRunning():
+            QMessageBox.warning(self, "Uyarı", "Başka bir işlem devam ediyor.")
+            return
+        self._batch_file_op_active = True
+        self._batch_file_op_kind = kind
+        self._batch_file_op_dest = dest_prefix
+        self._batch_file_op_items = list(items)
+        self._batch_file_op_index = 0
+        self.view.setEnabled(False)
+        self._batch_file_op_next()
+
+    def _batch_file_op_next(self):
+        if self._batch_file_op_index >= len(self._batch_file_op_items):
+            self._batch_file_op_finished()
+            return
+        item = self._batch_file_op_items[self._batch_file_op_index]
+        kind = self._batch_file_op_kind
+        dest = self._batch_file_op_dest
+        name = item['name']
+        self.lbl_status.setText(
+            f"{'Kopyalanıyor' if kind == 'copy' else 'Taşınıyor'} "
+            f"({self._batch_file_op_index + 1}/{len(self._batch_file_op_items)}): {name}..."
+        )
+
+        def do_op():
+            if kind == 'copy':
+                self._copy_item(item, dest)
+            else:
+                self._move_item(item, dest)
+
+        if not self._start_action_worker(
+            do_op, self._on_batch_file_op_step, self._on_batch_file_op_error,
+        ):
+            QTimer.singleShot(300, self._batch_file_op_next)
+
+    def _copy_item(self, item: dict, dest_prefix: str):
+        path = item['path'].lstrip('/')
+        dest_prefix = dest_prefix or ''
+        if item['type'] == 'folder':
+            folder_name = item['name'].rstrip('/')
+            if dest_prefix.rstrip('/') == os.path.dirname(path.rstrip('/')):
+                existing = self._existing_names_in_current_folder()
+                folder_name = self._unique_copy_name(folder_name, existing)
+            dest = f"{dest_prefix}{folder_name}/"
+            self.spaces_client.copy_folder_recursive(path, dest)
+        else:
+            file_name = item['name']
+            parent = os.path.dirname(path)
+            if dest_prefix.rstrip('/') == parent:
+                existing = self._existing_names_in_current_folder()
+                file_name = self._unique_copy_name(file_name, existing)
+            dest_key = f"{dest_prefix}{file_name}"
+            self.spaces_client.copy_object(path, dest_key)
+
+    def _move_item(self, item: dict, dest_prefix: str):
+        path = item['path'].lstrip('/')
+        dest_prefix = dest_prefix or ''
+        if item['type'] == 'folder':
+            folder_name = item['name'].rstrip('/')
+            dest = f"{dest_prefix}{folder_name}/"
+            self.spaces_client.move_folder_recursive(path, dest)
+        else:
+            dest_key = f"{dest_prefix}{item['name']}"
+            self.spaces_client.move_object(path, dest_key)
+
+    def _on_batch_file_op_step(self):
+        item = self._batch_file_op_items[self._batch_file_op_index]
+        kind_label = "kopyalandı" if self._batch_file_op_kind == 'copy' else "taşındı"
+        self.transfer_panel.add_entry(
+            self._batch_file_op_kind, item['name'], kind_label,
+        )
+        self._batch_file_op_index += 1
+        self._batch_file_op_next()
+
+    def _on_batch_file_op_error(self, msg):
+        QMessageBox.critical(self, "Hata", f"İşlem hatası: {msg}")
+        self._batch_file_op_index = len(self._batch_file_op_items)
+        self._on_batch_file_op_step()
+
+    def _batch_file_op_finished(self):
+        self._batch_file_op_active = False
+        self.view.setEnabled(True)
+        self.listing_cache.invalidate(self._prefix_for_api())
+        self.clear_selection()
+        self.refresh_list(use_cache=False)
+        label = "Kopyalama" if self._batch_file_op_kind == 'copy' else "Taşıma"
+        self.lbl_status.setText(f"{label} tamamlandı")
+
+    def _on_file_op_finished(self):
+        self.listing_cache.invalidate(self._prefix_for_api())
+        self.refresh_list(use_cache=False)
+        self.lbl_status.setText("İşlem tamamlandı")
+
+    def on_files_dropped(self, paths: list):
+        if not self.spaces_client or not self.upload_service:
+            QMessageBox.warning(self, "Uyarı", "Yükleme için önce bağlanın.")
+            return
+        if not paths:
+            return
+        for p in paths:
+            self.transfer_panel.add_entry('upload', os.path.basename(p), 'başladı')
+        self.handle_upload(paths, 'private')
+
     def create_folder(self):
         if self._batch_delete_active:
             QMessageBox.warning(self, "Uyarı", "Silme işlemi devam ediyor.")
             return
-        from PySide6.QtWidgets import QInputDialog
         name, ok = QInputDialog.getText(self, "Yeni Klasör", "Klasör ismi:")
         if not ok or not name:
             return
@@ -1291,8 +1574,17 @@ class MainWindow(QMainWindow):
             )
             self._upload_worker.file_completed.connect(self.upload_dlg.set_completed)
             self._upload_worker.file_error.connect(self.upload_dlg.set_error)
+        self._upload_worker.file_completed.connect(self._on_upload_file_completed)
+        self._upload_worker.file_error.connect(self._on_upload_file_error)
         self._upload_worker.finished.connect(self._on_upload_worker_finished)
         self._upload_worker.start()
+        self.lbl_status.setText(f"Yükleniyor: {len(files_to_upload)} dosya...")
+
+    def _on_upload_file_completed(self, local_path: str):
+        self.transfer_panel.add_entry('upload', os.path.basename(local_path), 'tamamlandı')
+
+    def _on_upload_file_error(self, local_path: str, _msg: str):
+        self.transfer_panel.add_entry('upload', os.path.basename(local_path), 'hata')
 
     @Slot()
     def on_upload_all_finished(self):

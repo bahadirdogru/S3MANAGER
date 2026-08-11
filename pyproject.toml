@@ -1,0 +1,28 @@
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers --tb=short"
+markers = [
+    "unit: saf fonksiyon / sınıf testleri",
+    "integration: moto veya dosya sistemi ile servis testleri",
+]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = [
+    "src/main.py",
+    "src/ui/*",
+    "src/services/upload_service.py",
+    "src/config/credentials.py",
+    "src/utils/logging_config.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 60
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+]

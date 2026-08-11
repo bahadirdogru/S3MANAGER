@@ -16,6 +16,33 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-11 — v0.0.7 yayınlandı
+
+- **Ne:** Dosya yöneticisi tamamlama, önizleme paneli, pytest test altyapısı
+- **İçerik:**
+  - Kopyala / taşı / yeniden adlandır (toolbar, context menu, F2, Ctrl+C/X)
+  - Toolbar arama (prefix filtre), sürükle-bırak yükleme, transfer geçmişi paneli
+  - Split-view dosya önizleme (görsel/metin), Qt standart toolbar ikonları
+  - pytest + moto test suite (89 test), CI test job
+- **Binary'ler:** Windows setup/portable, macOS arm64 dmg, Linux tar.gz + AppImage
+- **Kaynak:** [v0.0.7 release](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.7)
+
+---
+
+## 2026-08-11 — Otomatik test altyapısı (pytest)
+
+- **Ne:** pytest tabanlı unit + servis testleri; CI entegrasyonu
+- **Nasıl:**
+  - `pyproject.toml` — pytest markers, coverage %60 eşiği
+  - `tests/unit/` — helpers, validators, object_metadata, listing_cache, update_service, settings, share_service
+  - `tests/services/test_spaces_client.py` — moto mock S3 (CRUD, copy/move/rename, ACL)
+  - `tests/conftest.py` — `mock_config_dir`, `spaces_client` fixture'ları
+  - `.github/workflows/ci.yml` — ayrı `test` job; `build` `needs: test`
+  - `scripts/test.sh` — yerel test runner
+- **Dosyalar:** `pyproject.toml`, `requirements-dev.txt`, `tests/`, `ci.yml`, `README.md`, `LLM.md`
+
+---
+
 ## 2026-08-11 — v0.0.6 yayınlandı
 
 - **Ne:** Koyu / açık tema desteği ile yeni sürüm

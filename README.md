@@ -43,9 +43,13 @@ Bu proje [Bahadır Doğru](https://bahadirdogru.com) tarafından **S3MANAGER** a
 - Sayfalı lazy loading
 - Breadcrumb navigasyon
 - Sütun sıralama, çoklu seçim
+- Kopyala / taşı / yeniden adlandır (F2, Ctrl+C/X)
+- Toolbar arama (prefix filtre)
+- Sağ panel dosya önizleme (görsel, metin)
 
 ### ⬆️ Yükleme
 - Dosya ve klasör yükleme
+- Ana pencereye sürükle-bırak
 - Private / Public ACL
 - Otomatik Content-Type ve Content-Disposition (html, zip, css, js vb.)
 - Multipart (>100 MB)
@@ -62,7 +66,9 @@ Bu proje [Bahadır Doğru](https://bahadirdogru.com) tarafından **S3MANAGER** a
 
 ### 🎨 Modern UI
 - PySide6 (Qt 6)
-- WhatsApp-inspired dark theme
+- WhatsApp-inspired dark/light theme
+- Qt standart toolbar ikonları
+- Transfer geçmişi paneli
 - Detaylar: [UI.md](UI.md)
 
 </td>
@@ -120,22 +126,32 @@ S3 uyumlu depolama (boto3) için önceliklendirilmiş geliştirme planı. Maddel
 
 ### Yakın vade — temel S3 işlemleri
 
-| Özellik | Açıklama | Neden önemli |
-|---------|----------|--------------|
-| **Yeniden adlandırma / taşıma / kopyalama** | `copy_object` + `delete_object` ile dosya ve klasör işlemleri | Dosya yöneticisinin olmazsa olmazı; şu an yalnızca silme var |
-| **Çoklu bağlantı profili** | Birden fazla bucket/endpoint kaydı; hızlı geçiş | Tek `config.ini` profili ile sınırlı; AWS S3, MinIO, Backblaze B2 gibi S3 uyumlu servislere genişleme |
-| **Prefix arama ve filtre** | Mevcut klasörde veya bucket genelinde anahtar adına göre arama | Büyük bucket'larda gezinmeyi pratik kılar |
-| **Kimlik bilgisi güvenliği** | OS keyring veya şifreli credential depolama | Access key/secret şu an düz metin (`~/.s3manager/config.ini`) |
+| Özellik | Açıklama | Durum |
+|---------|----------|-------|
+| **Çoklu bağlantı profili** | Birden fazla bucket/endpoint kaydı; hızlı geçiş | Planlandı |
+| **Kimlik bilgisi güvenliği** | OS keyring veya şifreli credential depolama | Planlandı |
 
 ### Orta vade — üretkenlik ve görünürlük
 
-| Özellik | Açıklama | Neden önemli |
-|---------|----------|--------------|
-| **Nesne metadata paneli** | `Content-Type`, `Cache-Control`, özel `x-amz-meta-*` görüntüleme/düzenleme | Web asset yönetiminde kritik; boto `head_object` / `copy_object` MetadataDirective |
-| **Dosya önizleme** | Görsel, PDF, metin dosyaları için hızlı önizleme | İndirmeden içerik doğrulama |
-| **Sürükle-bırak yükleme** | Ana pencereden doğrudan hedef klasöre bırakma | Upload dialog'u atlayarak daha hızlı iş akışı |
-| **Transfer kuyruğu** | Bekleyen/tamamlanan yükleme-indirme geçmişi, duraklat/devam | Uzun toplu işlemlerde kontrol ve şeffaflık |
-| **Yükleme devam ettirme** | Kesilen multipart upload'ların resume edilmesi | Büyük dosyalarda güvenilirlik (`list_multipart_uploads`, `upload_part`) |
+| Özellik | Açıklama | Durum |
+|---------|----------|-------|
+| **Nesne metadata paneli** | `Content-Type`, `Cache-Control`, özel `x-amz-meta-*` görüntüleme/düzenleme | Planlandı |
+| **Yükleme devam ettirme** | Kesilen multipart upload'ların resume edilmesi | Planlandı |
+
+### Geç vade — sonra
+
+| Özellik | Açıklama | Not |
+|---------|----------|-----|
+| **Dosya önizleme (gelişmiş)** | PDF viewer, daha fazla format, düzenleme | Temel split-view önizleme eklendi; PDF ve gelişmiş tipler sonraya |
+
+### Tamamlanan (v0.0.7+)
+
+- **Yeniden adlandırma / taşıma / kopyalama** — context menu, toolbar, F2/Ctrl+C/Ctrl+X
+- **Prefix arama ve filtre** — toolbar arama kutusu (mevcut klasör)
+- **Sürükle-bırak yükleme** — ana pencereye dosya bırakma
+- **Transfer geçmişi** — alt panelde yükleme/indirme kayıtları
+- **Toolbar ikonları** — Qt standart ikon seti
+- **Dosya önizleme (MVP)** — split-view sağ panel; görsel ve metin dosyaları
 
 ### Bilinçli olarak kapsam dışı (şimdilik)
 
@@ -145,13 +161,13 @@ S3 uyumlu depolama (boto3) için önceliklendirilmiş geliştirme planı. Maddel
 
 ## Releases
 
-En son sürüm: **[v0.0.6](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.6)** — [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz.
+En son sürüm: **[v0.0.7](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.7)** — [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz.
 
 | Platform | Dosya |
 |----------|-------|
-| Windows | `S3MANAGER-0.0.6-windows-setup.exe` (NSIS installer) veya `S3MANAGER-0.0.6-windows-portable.zip` |
-| macOS (Apple Silicon) | `S3MANAGER-0.0.6-macos-arm64.dmg` |
-| Linux x86_64 | `S3MANAGER-0.0.6-linux-x86_64.tar.gz` veya `S3MANAGER-0.0.6-linux-x86_64.AppImage` |
+| Windows | `S3MANAGER-0.0.7-windows-setup.exe` (NSIS installer) veya `S3MANAGER-0.0.7-windows-portable.zip` |
+| macOS (Apple Silicon) | `S3MANAGER-0.0.7-macos-arm64.dmg` |
+| Linux x86_64 | `S3MANAGER-0.0.7-linux-x86_64.tar.gz` veya `S3MANAGER-0.0.7-linux-x86_64.AppImage` |
 
 Uygulama açılışında GitHub Releases üzerinden otomatik güncelleme kontrolü yapılır. **Yardım → Güncellemeleri Kontrol Et** ile manuel kontrol de mümkündür. Yeni sürüm bulunursa indirme sayfası tarayıcıda açılır.
 
@@ -161,9 +177,9 @@ Uygulama açılışında GitHub Releases üzerinden otomatik güncelleme kontrol
 
 ```bash
 # src/version.py sürümünü güncelle, commit et
-git tag v0.0.6
+git tag v0.0.7
 git push origin main
-git push origin v0.0.6
+git push origin v0.0.7
 ```
 
 `v*.*.*` tag push edildiğinde GitHub Actions otomatik olarak Windows, macOS ve Linux'ta build alır ve [GitHub Release](https://github.com/bahadirdogru/S3MANAGER/releases) oluşturur.
@@ -174,9 +190,9 @@ PyInstaller **onedir** ile hedef platformda yerel derleme gerekir (cross-compile
 
 | Platform | Komut | Çıktı |
 |----------|-------|-------|
-| Windows | `.\scripts\package-windows.ps1 -Version 0.0.6` | NSIS installer + portable zip |
-| macOS | `./scripts/package-macos.sh 0.0.6` | `.dmg` |
-| Linux | `./scripts/package-linux.sh 0.0.6` | `.tar.gz` + `.AppImage` |
+| Windows | `.\scripts\package-windows.ps1 -Version 0.0.7` | NSIS installer + portable zip |
+| macOS | `./scripts/package-macos.sh 0.0.7` | `.dmg` |
+| Linux | `./scripts/package-linux.sh 0.0.7` | `.tar.gz` + `.AppImage` |
 | Tümü (sadece build) | `.\scripts\build.ps1` / `./scripts/build.sh` | `dist/S3MANAGER/` |
 
 Windows paketleme için [NSIS](https://nsis.sourceforge.io/) kurulu olmalıdır (`makensis` PATH'te veya Chocolatey ile `choco install nsis`). CI ortamında NSIS Chocolatey üzerinden kurulur. İkon üretimi: `python scripts/generate_icons.py` (Pillow gerekir).
@@ -233,6 +249,27 @@ Dosya uzantısına göre **Content-Type** ve **Content-Disposition** otomatik at
 ## Desteklenen bölgeler
 
 `nyc3` · `sfo3` · `sgp1` · `ams3` · `fra1` · `blr1`
+
+## Geliştirme
+
+### Testler
+
+```bash
+pip install -r requirements-dev.txt
+pytest                                    # tüm testler
+pytest tests/unit -v                      # yalnızca unit
+pytest --cov=src --cov-report=html        # HTML rapor → htmlcov/
+./scripts/test.sh                         # venv + pytest (Git Bash)
+```
+
+Yapılandırma: [`pyproject.toml`](pyproject.toml). CI'da `ubuntu-latest` üzerinde `pytest` job'ı çalışır; build matrix yalnızca testler geçince başlar.
+
+| Katman | Araç | Dizin |
+|--------|------|-------|
+| Unit | pytest | `tests/unit/` |
+| Servis (S3 mock) | pytest + moto | `tests/services/` |
+
+GUI (PySide6) testleri kapsam dışıdır.
 
 ## Geliştirme notu
 
