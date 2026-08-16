@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S3MANAGER — DigitalOcean Spaces için masaüstü dosya yöneticisi</title>
+  <meta name="description" content="S3MANAGER ile DigitalOcean Spaces ve S3 uyumlu depolama servislerindeki dosyalarınızı yerel masaüstü deneyimiyle yönetin. Yükleme, indirme, paylaşım ve önizleme tek arayüzde.">
+  <meta name="theme-color" content="#00A884">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="S3MANAGER — DigitalOcean Spaces dosya yöneticisi">
+  <meta property="og:description" content="DigitalOcean Spaces ve S3 uyumlu depolama için cross-platform masaüstü dosya yöneticisi. Windows, macOS ve Linux.">
+  <meta property="og:image" content="https://bahadirdogru.github.io/S3MANAGER/assets/og-image.png">
+  <meta property="og:url" content="https://bahadirdogru.github.io/S3MANAGER/">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a href="#" class="nav-brand">
+        <img src="assets/icon.png" width="36" height="36" alt="S3MANAGER logo">
+        S3MANAGER
+      </a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Menüyü aç/kapat" aria-expanded="false">☰</button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#ozellikler">Özellikler</a></li>
+        <li><a href="#ekran-goruntuleri">Ekran görüntüleri</a></li>
+        <li><a href="#nasil-calisir">Nasıl çalışır</a></li>
+        <li><a href="#indir">İndir</a></li>
+        <li><a href="https://github.com/bahadirdogru/S3MANAGER" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <span class="badge" id="version-badge">v0.0.8</span>
+          <h1>DigitalOcean Spaces için masaüstü dosya yöneticisi</h1>
+          <p class="hero-lead">
+            S3MANAGER, bulut depolamanızdaki dosyaları yerel bir uygulama deneyimiyle yönetmenizi sağlar.
+            Yükleme, indirme, paylaşım ve önizleme — tek modern arayüzde.
+          </p>
+          <div class="hero-actions">
+            <a href="https://github.com/bahadirdogru/S3MANAGER/releases/latest" class="btn btn-primary" id="download-cta">
+              İndir
+            </a>
+            <a href="https://github.com/bahadirdogru/S3MANAGER" class="btn btn-secondary" target="_blank" rel="noopener">
+              GitHub'da görüntüle
+            </a>
+          </div>
+          <div class="hero-meta">
+            <span>🖥 Windows · macOS · Linux</span>
+            <span>🐍 Python 3.10+</span>
+            <span>📦 GPL-3.0</span>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <figure class="hero-screenshot">
+            <img src="screenshots/main-dark.png" width="620" height="400" alt="S3MANAGER ana pencere — koyu tema dosya gezgini">
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="ozellikler">
+      <div class="container">
+        <div class="section-header">
+          <h2>Özellikler</h2>
+          <p>DigitalOcean Spaces ve diğer S3 uyumlu servisler için ihtiyacınız olan temel işlemler.</p>
+        </div>
+        <div class="features-grid">
+          <article class="feature-card">
+            <div class="feature-icon">📁</div>
+            <h3>Dosya gezgini</h3>
+            <p>Klasör yapısı, breadcrumb navigasyon, sayfalı lazy loading, çoklu seçim ve sütun sıralama.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">⬆️</div>
+            <h3>Yükleme</h3>
+            <p>Dosya ve klasör yükleme, sürükle-bırak, multipart (&gt;100 MB), ACL (private/public) ve paralel yükleme.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">⬇️</div>
+            <h3>İndirme & paylaşım</h3>
+            <p>Tekli ve çoklu indirme, klasör indirme, 3 veya 7 gün presigned URL ile paylaşım.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">👁</div>
+            <h3>Dosya önizleme</h3>
+            <p>Split-view sağ panel; görsel ve metin dosyalarını listeden seçerken anında önizleyin.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">⚙️</div>
+            <h3>Ayarlar merkezi</h3>
+            <p>Bağlantı, yükleme metadata, görünüm, günlük, bakım (yarım multipart) ve yardım sekmeleri.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon">🌙</div>
+            <h3>Dark / Light tema</h3>
+            <p>WhatsApp-inspired koyu ve açık tema; tüm dialoglar ve tablolarla tutarlı görünüm.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="ekran-goruntuleri">
+      <div class="container">
+        <div class="section-header">
+          <h2>Ekran görüntüleri</h2>
+          <p>Gerçek uygulama arayüzünden örnekler. Tıklayarak büyütebilirsiniz.</p>
+        </div>
+        <div class="gallery-grid">
+          <figure class="gallery-item">
+            <button type="button" class="gallery-trigger" data-src="screenshots/main-dark.png" aria-label="Koyu tema — büyüt">
+              <img src="screenshots/main-dark.png" alt="Ana pencere koyu tema">
+            </button>
+            <figcaption class="gallery-caption"><strong>Koyu tema</strong> — dosya gezgini ve toolbar</figcaption>
+          </figure>
+          <figure class="gallery-item">
+            <button type="button" class="gallery-trigger" data-src="screenshots/main-light.png" aria-label="Açık tema — büyüt">
+              <img src="screenshots/main-light.png" alt="Ana pencere açık tema">
+            </button>
+            <figcaption class="gallery-caption"><strong>Açık tema</strong> — light mod görünümü</figcaption>
+          </figure>
+          <figure class="gallery-item">
+            <button type="button" class="gallery-trigger" data-src="screenshots/preview.png" aria-label="Önizleme paneli — büyüt">
+              <img src="screenshots/preview.png" alt="Dosya önizleme paneli">
+            </button>
+            <figcaption class="gallery-caption"><strong>Önizleme</strong> — split-view sağ panel</figcaption>
+          </figure>
+          <figure class="gallery-item">
+            <button type="button" class="gallery-trigger" data-src="screenshots/settings.png" aria-label="Ayarlar — büyüt">
+              <img src="screenshots/settings.png" alt="Ayarlar dialogu Bakım sekmesi">
+            </button>
+            <figcaption class="gallery-caption"><strong>Ayarlar</strong> — bakım ve multipart yönetimi</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="nasil-calisir">
+      <div class="container">
+        <div class="section-header">
+          <h2>Nasıl çalışır?</h2>
+          <p>Üç adımda başlayın.</p>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <h3>İndir</h3>
+            <p>GitHub Releases sayfasından platformunuza uygun installer veya portable paketi indirin.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <h3>Bağlan</h3>
+            <p>Access Key, Secret, bölge, endpoint ve bucket bilgilerinizi girin. Ayarlar <code>~/.s3manager/config.ini</code> dosyasına kaydedilir.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <h3>Yönet</h3>
+            <p>Dosyalarınızı yükleyin, indirin, paylaşın ve önizleyin — tıpkı yerel bir dosya gezgininde olduğu gibi.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="indir">
+      <div class="container">
+        <div class="section-header">
+          <h2>İndir</h2>
+          <p>En son sürümü GitHub Releases üzerinden indirebilirsiniz.</p>
+        </div>
+        <div class="download-table-wrap">
+          <table class="download-table">
+            <thead>
+              <tr>
+                <th>Platform</th>
+                <th>Dosya</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Windows</td>
+                <td><code>S3MANAGER-0.0.8-windows-setup.exe</code> veya portable zip</td>
+              </tr>
+              <tr>
+                <td>macOS (Apple Silicon)</td>
+                <td><code>S3MANAGER-0.0.8-macos-arm64.dmg</code></td>
+              </tr>
+              <tr>
+                <td>Linux x86_64</td>
+                <td><code>S3MANAGER-0.0.8-linux-x86_64.tar.gz</code> veya AppImage</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="download-note">
+          ⚠️ Binary dosyalar kod imzalı değildir; Windows Defender veya macOS Gatekeeper uyarısı verebilir.
+          Kaynak koddan çalıştırmak için: <code>pip install -r requirements.txt</code> ve <code>python src/main.py</code>.
+        </p>
+        <p style="margin-top: 1.5rem; text-align: center;">
+          <a href="https://github.com/bahadirdogru/S3MANAGER/releases/latest" class="btn btn-primary">Tüm sürümleri görüntüle</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="nav-brand">
+            <img src="assets/icon.png" width="32" height="32" alt="">
+            S3MANAGER
+          </a>
+          <p>
+            DigitalOcean Spaces ve S3 uyumlu depolama için cross-platform masaüstü dosya yöneticisi.
+            <a href="https://bahadirdogru.com" target="_blank" rel="noopener">Bahadır Doğru</a> tarafından geliştirilmiştir.
+          </p>
+        </div>
+        <div class="footer-links">
+          <h4>Proje</h4>
+          <ul>
+            <li><a href="https://github.com/bahadirdogru/S3MANAGER" target="_blank" rel="noopener">GitHub</a></li>
+            <li><a href="https://github.com/bahadirdogru/S3MANAGER/releases" target="_blank" rel="noopener">Releases</a></li>
+            <li><a href="https://github.com/bahadirdogru/S3MANAGER/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a></li>
+            <li><a href="https://github.com/bahadirdogru/S3MANAGER/issues" target="_blank" rel="noopener">Issues</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Lisans</h4>
+          <ul>
+            <li><a href="https://github.com/bahadirdogru/S3MANAGER/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0</a></li>
+            <li><a href="https://www.digitalocean.com/products/spaces" target="_blank" rel="noopener">DigitalOcean Spaces</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Bahadır Doğru · GPL-3.0</span>
+        <span>PySide6 · boto3 · Python</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Ekran görüntüsü">
+    <button class="lightbox-close" id="lightbox-close" aria-label="Kapat">×</button>
+    <img src="" alt="" id="lightbox-img">
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

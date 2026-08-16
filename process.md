@@ -3,6 +3,7 @@
 > | Dosya | Ne için okunur |
 > |-------|----------------|
 > | [README.md](README.md) | Kurulum, kullanım, proje tanıtımı (GitHub/GitLab anasayfa) |
+> | [docs/](docs/) | Tanıtım web sitesi ([GitHub Pages](https://bahadirdogru.github.io/S3MANAGER/)) |
 > | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
 > | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |
@@ -13,6 +14,14 @@
 # S3MANAGER — Changelog
 
 Ters kronolojik sıra. Gelecek işler burada tutulmaz.
+
+---
+
+## 2026-08-16 — GitHub Pages tanıtım sitesi
+
+- **Ne:** `docs/` altında statik tanıtım sayfası — hero, özellikler, ekran görüntüleri, indirme tablosu
+- **URL:** https://bahadirdogru.github.io/S3MANAGER/ (Settings → Pages → `main` / `/docs`)
+- **Dosyalar:** `docs/index.html`, `docs/css/style.css`, `docs/js/main.js`, `docs/screenshots/`, `scripts/capture_screenshots.py`, `scripts/generate_og_image.py`
 
 ---
 

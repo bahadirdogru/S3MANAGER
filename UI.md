@@ -3,6 +3,7 @@
 > | Dosya | Ne için okunur |
 > |-------|----------------|
 > | [README.md](README.md) | Kurulum, kullanım, proje tanıtımı (GitHub/GitLab anasayfa) |
+> | [docs/](docs/) | Tanıtım web sitesi ([GitHub Pages](https://bahadirdogru.github.io/S3MANAGER/)) |
 > | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
 > | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |
@@ -28,6 +29,8 @@
 ## Renk Paleti - WhatsApp Inspired (QSS)
 
 Kaynak: `src/ui/qt/styles.py` — `ThemePalette`, `build_stylesheet()`, `apply_app_theme()`.
+
+Pazarlama sitesi (`docs/css/style.css`) aynı WhatsApp-inspired paleti CSS custom properties ile kullanır; renk değişikliklerinde her iki dosyayı senkron tutun.
 
 ### Qt Style Sheets (QSS) Tema
 

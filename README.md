@@ -9,8 +9,9 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](https://github.com/bahadirdogru/S3MANAGER/releases)
+[![Website](https://img.shields.io/badge/Website-GitHub%20Pages-00A884)](https://bahadirdogru.github.io/S3MANAGER/)
 
-[Özellikler](#özellikler) · [Kurulum](#kurulum) · [Roadmap](#roadmap) · [Kullanım](#kullanım) · [Dağıtım](#dağıtım) · [Dökümantasyon](#dökümantasyon)
+[Özellikler](#özellikler) · [Kurulum](#kurulum) · [Web sitesi](https://bahadirdogru.github.io/S3MANAGER/) · [Roadmap](#roadmap) · [Kullanım](#kullanım) · [Dağıtım](#dağıtım) · [Dökümantasyon](#dökümantasyon)
 
 </div>
 
@@ -21,6 +22,7 @@
 > | Dosya | Ne için okunur |
 > |-------|----------------|
 > | [README.md](README.md) | Kurulum, kullanım, proje tanıtımı (GitHub/GitLab anasayfa) |
+> | [docs/](docs/) | Tanıtım web sitesi ([GitHub Pages](https://bahadirdogru.github.io/S3MANAGER/)) |
 > | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
 > | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |
@@ -77,9 +79,9 @@ Bu proje [Bahadır Doğru](https://bahadirdogru.com) tarafından **S3MANAGER** a
 
 ### Ekran Görüntüsü
 
-> 📷 Ekran görüntüsü yakında eklenecek.
+![S3MANAGER ana pencere](docs/screenshots/main-dark.png)
 
-<!-- docs/screenshots/main.png -->
+Daha fazla görüntü: [tanıtım sitesi](https://bahadirdogru.github.io/S3MANAGER/#ekran-goruntuleri) · Yenileme: `python scripts/capture_screenshots.py`
 
 ## Gereksinimler
 
@@ -294,6 +296,7 @@ Bu projenin kodlama sürecinde **LLM (Large Language Model)** araçları kullan�
 
 | Dosya | İçerik |
 |-------|--------|
+| [docs/](docs/) | Tanıtım web sitesi (GitHub Pages) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari ve veri akışı |
 | [UI.md](UI.md) | Tasarım sistemi |
 | [LLM.md](LLM.md) | LLM geliştirme rehberi |
