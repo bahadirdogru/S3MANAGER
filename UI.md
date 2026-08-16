@@ -3,7 +3,7 @@
 > | Dosya | Ne için okunur |
 > |-------|----------------|
 > | [README.md](README.md) | Kurulum, kullanım, proje tanıtımı (GitHub/GitLab anasayfa) |
-> | [docs/](docs/) | Tanıtım web sitesi ([GitHub Pages](https://bahadirdogru.github.io/S3MANAGER/)) |
+> | [docs/](docs/) | Tanıtım web sitesi ([s3manager.bahadirdogru.com](https://s3manager.bahadirdogru.com/)) |
 > | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
 > | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |

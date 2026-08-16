@@ -9,7 +9,9 @@ Bu klasör statik tanıtım sitesini içerir.
 3. Branch: `main`, Folder: **`/docs`**
 4. Save — site birkaç dakika içinde yayında olur
 
-**URL:** https://bahadirdogru.github.io/S3MANAGER/
+**URL:** https://s3manager.bahadirdogru.com/
+
+Özel domain: `docs/CNAME` dosyasında tanımlı. GitHub Pages ayarlarında **Custom domain** alanına aynı adresi girin.
 
 ## Yerel önizleme
 
