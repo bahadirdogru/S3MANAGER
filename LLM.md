@@ -3,21 +3,25 @@
 > | Dosya | Ne için okunur |
 > |-------|----------------|
 > | [README.md](README.md) | Kurulum, kullanım, proje tanıtımı (GitHub/GitLab anasayfa) |
+> | [docs/](docs/) | Tanıtım web sitesi ([s3manager.bahadirdogru.com](https://s3manager.bahadirdogru.com/)) |
 > | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
 > | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |
-> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (LLM changelog) |
+> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (changelog) |
 >
 > **Bu dosya:** LLM için token-optimize proje yapısı ve geliştirme kısıtları.
 
 # S3MANAGER — LLM Rehberi
 
-DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. Sürüm: **0.0.7** (`src/version.py`). **pytest** ile unit + servis testleri (`tests/`).
+DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. Sürüm: **0.0.8** (`src/version.py`). **pytest** — 93 test (`tests/`).
 
 ## Dizin yapısı
 
 ```
 S3MANAGER/
+├── docs/                        # Tanıtım sitesi (GitHub Pages → s3manager.bahadirdogru.com)
+│   ├── index.html, css/, js/, assets/, screenshots/, CNAME
+├── release-notes/               # GitHub Release body (v0.0.8.md …)
 ├── tests/
 │   ├── conftest.py              # mock_config_dir, spaces_client (moto)
 │   ├── unit/                    # helpers, validators, metadata, cache, settings
@@ -37,7 +41,7 @@ S3MANAGER/
 │   │   ├── object_properties_dialog.py  # Nesne metadata / ACL
 │   │   ├── incomplete_uploads_panel.py  # Yarım multipart (Bakım sekmesi)
 │   │   ├── upload_metadata_panel.py  # Metadata form widget
-│   │   ├── styles.py            # ThemePalette, build_stylesheet, apply_app_theme
+│   │   ├── styles.py            # ThemePalette, build_stylesheet, apply_app_theme, apply_item_view_palette
 │   │   ├── theme_switch.py      # Toolbar tema toggle
 │   │   ├── connection_indicator.py  # Bağlantı göstergesi (yeşil/kırmızı)
 │   │   ├── preview_panel.py
@@ -55,10 +59,13 @@ S3MANAGER/
 │       └── object_metadata.py   # MIME tespiti, upload ExtraArgs
 ├── assets/                      # icon.png, icon.ico, icon.icns (macOS build)
 ├── .github/workflows/
-│   ├── ci.yml                   # PR/main matrix build
-│   └── release.yml              # tag → GitHub Release
+│   ├── ci.yml                   # PR/main: test → matrix build
+│   └── release.yml              # tag → build + release-notes/vX.Y.Z.md body
 ├── scripts/
 │   ├── build.ps1 / build.sh
+│   ├── test.sh                  # venv + pytest + coverage
+│   ├── capture_screenshots.py   # docs/screenshots/ UI görüntüleri
+│   ├── generate_og_image.py     # docs/assets/og-image.png
 │   ├── package-windows.ps1      # NSIS installer (makensis otomatik bulunur)
 │   ├── package-macos.sh         # DMG
 │   ├── package-linux.sh         # tar.gz + AppImage (--appimage-extract-and-run CI)
@@ -80,7 +87,7 @@ S3MANAGER/
 | `listing_cache.py` | Prefix bazlı liste cache (TTL 60s) |
 | `dialogs.py` | Login, Upload, ShareDialog, UploadMetadataSettingsDialog (wrapper) |
 | `settings_dialog.py` | SettingsDialog — Bağlantı, Metadata, Görünüm, Günlük, Bakım, Yardım sekmeleri |
-| `styles.py` | `ThemePalette`, `apply_app_theme()`, `build_stylesheet()` — QApplication seviyesinde tema |
+| `styles.py` | `ThemePalette`, `apply_app_theme()`, `apply_item_view_palette()` — QApplication seviyesinde tema |
 | `theme_switch.py` | Toolbar `ThemeSwitch` widget (🌙/☀️) |
 | `settings.py` | config.ini; `[upload_metadata]`, `[appearance] theme` |
 
@@ -101,11 +108,11 @@ S3MANAGER/
 3. **Multipart eşiği:** 100 MB (`helpers.MULTIPART_THRESHOLD_MB` ve `TransferConfig`).
 4. **ACL listelemede çekilmez** — `AttributeWorker` görünür satırlarda lazy load.
 5. **Config:** `~/.s3manager/config.ini` düz metin; log `~/.s3manager/app.log`. Eski `~/.pydamlaspace/` otomatik taşınır. `[upload_metadata]` — yükleme Content-Type/Disposition/Cache-Control. `[appearance] theme` — `dark`/`light`.
-6. **Tema:** `apply_app_theme()` → `QApplication.setStyleSheet`; dialog'larda ayrı `setStyleSheet` kullanma; gölge için `apply_dialog_elevation(dark=...)`.
+6. **Tema:** `apply_app_theme()` → `QApplication.setStyleSheet`; tablolar için `apply_item_view_palette()`; dialog gölge `apply_dialog_elevation(dark=...)`.
 7. **Upload progress:** `progress.lock` içinde `get_progress()` çağırma (deadlock).
 8. **UploadDialog:** Dosya Seç = liste replace; `clear_progress_area()` yeni seçimde.
 9. **Remote key:** Leading `/` olmamalı.
-10. **Dökümantasyon:** Sadece 5 md dosyası; yeni md oluşturma.
+10. **Dökümantasyon:** README, UI, ARCHITECTURE, LLM, PROCESS, docs/ — yeni üst düzey md oluşturma. Changelog yalnızca PROCESS.md.
 11. **Changelog:** [PROCESS.md](PROCESS.md).
 
 ## Yeni özellik akışı
@@ -123,9 +130,9 @@ Test: `pytest`, `pytest-cov`, `moto[s3]`, `freezegun` — `requirements-dev.txt`
 
 ## Test
 
-- `pytest` — `tests/unit/` (saf fonksiyonlar) + `tests/services/` (moto S3)
-- Coverage eşiği %60 — `pyproject.toml`; UI (`src/ui/*`) ve `upload_service` omit
-- CI: `.github/workflows/ci.yml` → `test` job (ubuntu) → `build` matrix
+- `sh scripts/test.sh` veya `pytest` — 93 test; coverage eşiği %60 (`pyproject.toml`)
+- `tests/unit/` + `tests/services/` (moto S3); UI (`src/ui/*`) omit
+- CI: `.github/workflows/ci.yml` → `test` job → `build` matrix
 - GUI testleri yok (`pytest-qt` kullanılmaz)
 
 ## Çalıştırma
@@ -138,4 +145,6 @@ Test: `pytest`, `pytest-cov`, `moto[s3]`, `freezegun` — `requirements-dev.txt`
 
 ## Release
 
-`git tag v0.0.6 && git push origin v0.0.6` → `.github/workflows/release.yml` (Windows NSIS/choco, Linux AppImage/FUSE, macOS DMG).
+`src/version.py` güncelle → commit → `git tag v0.0.8 && git push origin main && git push origin v0.0.8`
+
+`release-notes/vX.Y.Z.md` ekle; `release.yml` tag push'ta binary + release body oluşturur.

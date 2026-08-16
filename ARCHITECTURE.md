@@ -3,10 +3,11 @@
 > | Dosya | Ne için okunur |
 > |-------|----------------|
 > | [README.md](README.md) | Kurulum, kullanım, proje tanıtımı (GitHub/GitLab anasayfa) |
+> | [docs/](docs/) | Tanıtım web sitesi ([s3manager.bahadirdogru.com](https://s3manager.bahadirdogru.com/)) |
 > | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
 > | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |
-> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (LLM changelog) |
+> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (changelog) |
 >
 > **Bu dosya:** Mimari dokümantasyon — katmanlar, veri akışı, threading ve güvenlik.
 
@@ -46,7 +47,7 @@ S3MANAGER, DigitalOcean Spaces ile etkileşim için PySide6 tabanlı bir masaüs
 
 ### MainWindow (`src/ui/qt/main_window.py`)
 
-Ana pencere; toolbar, breadcrumb, dosya listesi ve tüm worker'ları koordine eder.
+Ana pencere; iki satır toolbar, breadcrumb, arama, split-view (liste + önizleme), transfer paneli ve tüm worker'ları koordine eder.
 
 Navigasyon (`navigate_to`, breadcrumb, geri) sırasında önceki `SpacesWorker` durdurulur ve sinyalleri koparılır (`_stop_list_worker`, `_detach_list_worker`). Cache hit'te stale callback'lerin modeli bozmaması için `on_page_loaded` / `on_list_finished` içinde `sender() is _list_worker` kontrolü yapılır.
 
@@ -64,6 +65,18 @@ Navigasyon (`navigate_to`, breadcrumb, geri) sırasında önceki `SpacesWorker` 
 
 `QAbstractItemModel` tabanlı liste modeli. Sanal scrolling ile binlerce satır desteklenir. Sayfalı yükleme için `append_items()` kullanılır; `canFetchMore` / `fetchMore` scroll ile sonraki sayfayı tetikler.
 
+### PreviewPanel (`src/ui/qt/preview_panel.py`)
+
+Split-view sağ panel. Tek dosya seçildiğinde metadata + görsel/metin önizleme. **Özellikler** → `ObjectPropertiesDialog`.
+
+### SettingsDialog (`src/ui/qt/settings_dialog.py`)
+
+Toolbar **Ayarlar** — 6 sekme: Bağlantı, Yükleme Metadata, Görünüm, Günlük, **Bakım** (`IncompleteUploadsPanel`), Yardım. Görünüm sekmesi toolbar `ThemeSwitch` ile senkron.
+
+### ObjectPropertiesDialog (`src/ui/qt/object_properties_dialog.py`)
+
+Mevcut nesnede Content-Type, Cache-Control, `x-amz-meta-*`, ACL düzenleme → `SpacesClient.update_object_metadata`, `put_object_acl`.
+
 ### Dialogs (`src/ui/qt/dialogs.py`)
 
 - **LoginDialog** — Kimlik bilgisi, validators, `test_connection()`
@@ -72,7 +85,7 @@ Navigasyon (`navigate_to`, breadcrumb, geri) sırasında önceki `SpacesWorker` 
 
 ### Styles (`src/ui/qt/styles.py`)
 
-WhatsApp-inspired dark QSS — detaylar [UI.md](UI.md).
+WhatsApp-inspired dark/light QSS — `ThemePalette`, `apply_app_theme()`, `apply_item_view_palette()` (Windows tablo viewport). Detaylar [UI.md](UI.md).
 
 ## Servis Katmanı
 
@@ -82,8 +95,10 @@ Boto3 S3 client wrapper (DigitalOcean Spaces endpoint).
 
 - `list_objects_page()` — Tek API sayfası (lazy loading)
 - `list_objects()` — Tam liste (indirme/silme için)
-- `upload_file`, `download_file`, `delete_object`, `delete_folder_recursive`
-- `get_object_acl` — Lazy attribute load için
+- `upload_file`, `download_file`, `delete_object`, `delete_objects_batch`, `delete_folder_recursive`
+- `get_object_acl`, `head_object` — Lazy attribute / önizleme
+- `put_object_acl`, `update_object_metadata` — Nesne özellikleri dialogu
+- `list_incomplete_multipart_uploads`, `abort_multipart_upload` — Bakım sekmesi
 - `create_presigned_url`, `create_folder`, `test_connection`
 
 ### UploadService (`src/services/upload_service.py`)
@@ -148,6 +163,24 @@ DownloadWorker → list_all_keys (klasör) → download_file (her dosya)
 ShareDialog → ShareService.share_to_clipboard() → presigned URL → pyperclip
 ```
 
+### Nesne özellikleri
+
+```
+Context menu / PreviewPanel → ObjectPropertiesDialog
+                         → update_object_metadata (copy+replace)
+                         → put_object_acl
+```
+
+### Toplu silme
+
+```
+Çoklu seçim → delete_objects_batch (batch API, ActionWorker yerine doğrudan batch)
+```
+
+### Tanıtım sitesi
+
+Statik site `docs/` → GitHub Pages → https://s3manager.bahadirdogru.com/ (`docs/CNAME`). Renkler `docs/css/style.css` ile UI paleti senkron.
+
 ## Threading
 
 - **Ana thread:** Tüm Qt widget işlemleri
@@ -188,8 +221,8 @@ ShareDialog → ShareService.share_to_clipboard() → presigned URL → pypercli
 
 | Workflow | Tetikleyici | Çıktı |
 |----------|-------------|-------|
-| `ci.yml` | push/PR `main` | `test` (pytest) → matrix build (win/linux/mac), artifact 7 gün |
-| `release.yml` | tag `v*.*.*` | Windows (NSIS+zip), macOS (dmg), Linux (tar.gz+AppImage) → GitHub Release |
+| `ci.yml` | push/PR `main` | `test` (pytest, 93 test) → matrix build, artifact 7 gün |
+| `release.yml` | tag `v*.*.*` | Windows (NSIS+zip), macOS (dmg), Linux (tar.gz+AppImage) → GitHub Release (`release-notes/vX.Y.Z.md`) |
 
 PyInstaller `s3manager.spec`: yalnızca QtWidgets; `collect_all("PySide6")` kullanılmaz. Windows NSIS: Chocolatey + `makensis` PATH. Linux AppImage: `--appimage-extract-and-run` (CI'da FUSE gerekmez).
 

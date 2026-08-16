@@ -7,13 +7,19 @@
 > | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
 > | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |
-> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (LLM changelog) |
+> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (changelog) |
 >
 > **Bu dosya:** Kronolojik changelog — ne yapıldı, nasıl yapıldı, neden.
 
 # S3MANAGER — Changelog
 
 Ters kronolojik sıra. Gelecek işler burada tutulmaz.
+
+---
+
+## 2026-08-16 — Dökümantasyon senkronizasyonu
+
+- **Ne:** README, LLM, ARCHITECTURE, UI güncellendi — v0.0.8, tanıtım sitesi, Ayarlar/Bakım, nesne özellikleri, test.sh (93 test); CHANGELOG.md kaldırıldı (changelog yalnızca PROCESS.md)
 
 ---
 
@@ -36,7 +42,7 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 - **Ne:** Ayarlar merkezi, tema tutarlılığı, S3 API genişletmesi (nesne özellikleri, multipart bakım, batch silme)
 - **Binary'ler:** Windows setup/portable, macOS arm64 dmg, Linux tar.gz + AppImage
-- **Kaynak:** [v0.0.8 release](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.8), [CHANGELOG.md](CHANGELOG.md)
+- **Kaynak:** [v0.0.8 release](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.8), [PROCESS.md](PROCESS.md)
 
 ---
 

@@ -26,7 +26,7 @@
 > | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
 > | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |
-> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (LLM changelog) |
+> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (changelog) |
 
 ## Hakkında
 
@@ -178,7 +178,7 @@ Spaces access key ile **çalışmaz**; ayrı **DO API token** gerekir.
 
 ## Releases
 
-En son sürüm: **[v0.0.8](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.8)** — [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz. Değişiklik listesi: [CHANGELOG.md](CHANGELOG.md).
+En son sürüm: **[v0.0.8](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.8)** — [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz. Değişiklik listesi: [PROCESS.md](PROCESS.md).
 
 | Platform | Dosya |
 |----------|-------|
@@ -249,11 +249,31 @@ Dosya uzantısına göre **Content-Type** ve **Content-Disposition** otomatik at
 1. Tek dosya seçin → **Paylaş** (3/7 gün seçimi) veya sağ tık menüsü
 2. Link otomatik panoya kopyalanır
 
+### Ayarlar
+
+Toolbar **Ayarlar** → tab'lı dialog:
+
+| Sekme | İşlev |
+|-------|--------|
+| Bağlantı | Kayıtlı bucket/bölge/endpoint; bağlantıyı düzenle |
+| Yükleme Metadata | Content-Type / Disposition / Cache-Control kuralları |
+| Görünüm | Koyu / açık tema |
+| Günlük | `app.log` son satırlar |
+| Bakım | Yarım multipart yüklemeleri listele / iptal |
+| Yardım | Sürüm, güncelleme kontrolü, GitHub Releases |
+
+### Nesne özellikleri
+
+Tek dosya seçiliyken sağ tık **Özellikler** veya önizleme panelinde **Özellikler** → Content-Type, Cache-Control, özel metadata (`x-amz-meta-*`) ve ACL (private / public-read) düzenleme.
+
 ### Diğer
 
 - Boş alana sağ tık → **Yeni Klasör**, **Dosya Yükle**
-- Toolbar sağ üstteki **🌙/☀️** switch ile koyu/açık tema
-- **Del** silme, **F5** yenile, **Ctrl+A** tümünü seç
+- **Ayarlar** → tüm yapılandırma ve yardım
+- Toolbar **●** bağlantı göstergesi (yeşil = bağlı); tıklayınca Bağlan
+- Toolbar **🌙/☀️** ile koyu/açık tema
+- **Del** silme, **F5** yenile, **Ctrl+A** tümünü seç, **F2** yeniden adlandır, **Ctrl+C/X** kopyala/taşı
+- Ana pencereye sürükle-bırak ile yükleme
 
 ## Loglama
 
@@ -273,11 +293,13 @@ Dosya uzantısına göre **Content-Type** ve **Content-Disposition** otomatik at
 
 ```bash
 pip install -r requirements-dev.txt
-pytest                                    # tüm testler
+pytest                                    # tüm testler (93)
 pytest tests/unit -v                      # yalnızca unit
 pytest --cov=src --cov-report=html        # HTML rapor → htmlcov/
-./scripts/test.sh                         # venv + pytest (Git Bash)
+sh scripts/test.sh                        # venv + pytest (Git Bash)
 ```
+
+Tanıtım sitesi ekran görüntüleri: `python scripts/capture_screenshots.py` · OG görsel: `python scripts/generate_og_image.py`
 
 Yapılandırma: [`pyproject.toml`](pyproject.toml). CI'da `ubuntu-latest` üzerinde `pytest` job'ı çalışır; build matrix yalnızca testler geçince başlar.
 
@@ -296,11 +318,11 @@ Bu projenin kodlama sürecinde **LLM (Large Language Model)** araçları kullan�
 
 | Dosya | İçerik |
 |-------|--------|
-| [docs/](docs/) | Tanıtım web sitesi (GitHub Pages) |
+| [docs/](docs/) | Tanıtım sitesi — [s3manager.bahadirdogru.com](https://s3manager.bahadirdogru.com/) |
+| [PROCESS.md](PROCESS.md) | Değişiklik geçmişi (changelog) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari ve veri akışı |
 | [UI.md](UI.md) | Tasarım sistemi |
 | [LLM.md](LLM.md) | LLM geliştirme rehberi |
-| [PROCESS.md](PROCESS.md) | Değişiklik geçmişi |
 
 ---
 

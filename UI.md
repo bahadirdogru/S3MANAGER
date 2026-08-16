@@ -7,7 +7,7 @@
 > | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
 > | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |
-> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (LLM changelog) |
+> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (changelog) |
 >
 > **Bu dosya:** Tasarım sistemi — renk, font, widget, QSS ve UX kuralları.
 
@@ -78,9 +78,10 @@ Pazarlama sitesi (`docs/css/style.css`) aynı WhatsApp-inspired paleti CSS custo
 - Kartlar: `QFrame#FormFrame` → `bg_panel` + `border_subtle` (light/dark palet değişkenleri).
 - Dialog tipografi: `DialogTitle`, `DialogTitleLarge`, `DialogSubtitle`, `UploadPhaseStatus`, `DialogSummaryResult`, `StatusSuccess`, `StatusError`.
 - Tema geçişi: `apply_app_theme()` → `app.setStyleSheet` + `_repolish_top_levels()` + açık `ElevatedDialog` gölge güncelleme (`update_dialog_elevation`).
+- Windows tablolar: `apply_item_view_palette()` — `QTableWidget` / `QTableView` viewport palet uyumu (QSS tek başına yetmeyebilir).
 - **İstisna:** `QMessageBox` native Windows/macOS görünümü — tema ile tam uyum beklenmez.
 
-**Manuel test matrisi (Dark + Light):** ana liste/önizleme, Ayarlar (5 sekme), Bağlan, Yükle/İndir (3 faz), Paylaş/Hedef yol; dialog açıkken toolbar tema switch.
+**Manuel test matrisi (Dark + Light):** ana liste/önizleme, Ayarlar (6 sekme, Bakım dahil), Bağlan, Yükle/İndir (3 faz), Paylaş/Hedef yol, Nesne özellikleri; dialog açıkken toolbar tema switch.
 
 ### ThemeSwitch (toolbar satır 1, sağ uç)
 
@@ -133,11 +134,20 @@ Toolbar **Ayarlar** butonu → modal `QDialog#ElevatedDialog` (~640×520), `QTab
 | Yükleme Metadata | `UploadMetadataPanel` — otomatik Content-Type / Disposition / Cache-Control kuralları |
 | Görünüm | Koyu / Açık tema; önizleme anında; Kaydet ile persist; toolbar `ThemeSwitch` ile çift yönlü senkron |
 | Günlük | `app.log` yolu, `QPlainTextEdit#LogViewer` (son ~400 satır), Yenile / klasör aç / panoya kopyala |
+| Bakım | `IncompleteUploadsPanel` — yarım multipart listesi, iptal; `apply_theme()` + tablo paleti |
 | Yardım | Sürüm, GitHub Releases, güncelleme kontrolü, GPL-3.0 notu |
 
 Alt: **Kaydet** / **İptal** — metadata ve görünüm değişiklikleri Kaydet ile `config.ini`'ye yazılır.
 
 Eski toolbar **Yardım** menüsü ve **Metadata** butonu kaldırıldı; işlevleri bu dialoga taşındı.
+
+### Nesne özellikleri (`ObjectPropertiesDialog`)
+
+Context menu veya önizleme paneli **Özellikler** → `QDialog#ElevatedDialog`. Form alanları: Content-Type, Cache-Control, özel metadata satırları, ACL (private / public-read). `objectName`: `FormFrame`, `DialogTitle`, standart input kuralları.
+
+### Önizleme paneli (`PreviewPanel`)
+
+`QFrame#PreviewPanel` — split-view sağ panel. `PreviewTitle`, `PreviewMeta`, `PreviewTextView` (read-only), `PreviewPlaceholder`. Alt butonlar: İndir, Paylaş, **Özellikler** (`SecondaryButton`).
 
 ### Katman Hiyerarşisi (derinlik)
 
