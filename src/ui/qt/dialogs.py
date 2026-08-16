@@ -18,9 +18,6 @@ PROGRESS_UI_INTERVAL_MS = 150
 from src.ui.qt.styles import (
     apply_dialog_elevation,
     current_theme_mode,
-    WA_SUCCESS,
-    WA_ERROR,
-    WA_WARNING,
 )
 from src.config.settings import Settings
 from src.services.spaces_client import SpacesClient
@@ -36,6 +33,12 @@ from src.utils.validators import (
 from src.utils.logging_config import get_logger
 
 logger = get_logger('dialogs')
+
+
+def _repolish_widget(widget):
+    style = widget.style()
+    style.unpolish(widget)
+    style.polish(widget)
 
 
 def _format_speed_mbps(speed_mbps: float) -> str:
@@ -64,12 +67,13 @@ class LoginDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(32, 32, 32, 32)
         title = QLabel("DigitalOcean Spaces Bağlantısı")
-        title.setStyleSheet("font-size: 22px; font-weight: bold; margin-bottom: 20px;")
+        title.setObjectName("DialogTitleLarge")
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
         
         form_frame = QFrame()
         form_frame.setObjectName("FormFrame")
+        form_frame.setAutoFillBackground(True)
         form_layout = QVBoxLayout(form_frame)
         form_layout.setContentsMargins(20, 20, 20, 20)
         form_layout.setSpacing(12)
@@ -79,7 +83,7 @@ class LoginDialog(QDialog):
         
         for label_text, key, is_secret in fields:
             lbl = QLabel(label_text)
-            lbl.setStyleSheet("font-size: 14px; font-weight: bold;")
+            lbl.setObjectName("DialogSubtitle")
             form_layout.addWidget(lbl)
             
             if key == "region":
@@ -97,7 +101,7 @@ class LoginDialog(QDialog):
                 self.entries[key] = entry
         
         self.lbl_error = QLabel("")
-        self.lbl_error.setStyleSheet(f"color: {WA_ERROR}; font-size: 13px;")
+        self.lbl_error.setObjectName("StatusError")
         form_layout.addWidget(self.lbl_error)
         
         layout.addWidget(form_frame)
@@ -290,6 +294,8 @@ class UploadProgressBar(QWidget):
             self.lbl_status.setText("Multipart yükleniyor...")
         else:
             self.lbl_status.setText("Yükleniyor...")
+        self.lbl_status.setObjectName("ProgressMeta")
+        _repolish_widget(self.lbl_status)
 
     def set_completed(self):
         """Mark upload as completed"""
@@ -297,14 +303,16 @@ class UploadProgressBar(QWidget):
         self.lbl_percentage.setText("100%")
         self.lbl_size.setText(f"{format_file_size(self.filesize)} / {format_file_size(self.filesize)}")
         self.lbl_status.setText("✓ Tamamlandı")
-        self.lbl_status.setStyleSheet(f"color: {WA_SUCCESS}; font-size: 11px; font-weight: bold;")
+        self.lbl_status.setObjectName("StatusSuccess")
+        _repolish_widget(self.lbl_status)
         self.lbl_speed.setText("")
         self.lbl_multipart.setVisible(False)
 
     def set_error(self, msg):
         """Mark upload as error"""
         self.lbl_status.setText(f"✗ Hata: {msg}")
-        self.lbl_status.setStyleSheet(f"color: {WA_ERROR}; font-size: 11px; font-weight: bold;")
+        self.lbl_status.setObjectName("StatusError")
+        _repolish_widget(self.lbl_status)
         self.lbl_speed.setText("")
         self.lbl_multipart.setVisible(False)
 
@@ -369,61 +377,21 @@ class UploadMetadataSettingsDialog(QDialog):
         self.resize(560, 480)
         self.init_ui()
         self.apply_styles()
-        self._load_into_form(self._result_settings)
+        self.metadata_panel.load_settings(self._result_settings)
 
     def init_ui(self):
+        from src.ui.qt.upload_metadata_panel import UploadMetadataPanel
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(12)
 
         title = QLabel("Yükleme Metadata Ayarları")
-        title.setStyleSheet("font-size: 18px; font-weight: bold;")
+        title.setObjectName("DialogTitle")
         layout.addWidget(title)
 
-        hint = QLabel(
-            "Yükleme sırasında Content-Type, Content-Disposition ve isteğe bağlı "
-            "Cache-Control otomatik atanır."
-        )
-        hint.setObjectName("UploadSummaryLabel")
-        hint.setWordWrap(True)
-        layout.addWidget(hint)
-
-        form = QFrame()
-        form.setObjectName("FormFrame")
-        form_layout = QVBoxLayout(form)
-        form_layout.setContentsMargins(16, 16, 16, 16)
-        form_layout.setSpacing(10)
-
-        self.chk_enabled = QCheckBox("Otomatik metadata etkin")
-        form_layout.addWidget(self.chk_enabled)
-
-        form_layout.addWidget(QLabel("Cache-Control (boş = gönderilmez):"))
-        self.entry_cache_control = QLineEdit()
-        self.entry_cache_control.setPlaceholderText("örn. public, max-age=3600")
-        form_layout.addWidget(self.entry_cache_control)
-
-        form_layout.addWidget(QLabel("Metin charset:"))
-        self.entry_charset = QLineEdit()
-        self.entry_charset.setPlaceholderText("utf-8")
-        form_layout.addWidget(self.entry_charset)
-
-        form_layout.addWidget(QLabel("Inline uzantılar (virgülle ayrılmış):"))
-        self.entry_inline = QLineEdit()
-        form_layout.addWidget(self.entry_inline)
-
-        form_layout.addWidget(QLabel("Attachment uzantılar (virgülle ayrılmış):"))
-        self.entry_attachment = QLineEdit()
-        form_layout.addWidget(self.entry_attachment)
-
-        layout.addWidget(form)
-
-        btn_row = QHBoxLayout()
-        self.btn_reset = QPushButton("Varsayılana Dön")
-        self.btn_reset.setObjectName("SecondaryButton")
-        self.btn_reset.clicked.connect(self._reset_defaults)
-        btn_row.addWidget(self.btn_reset)
-        btn_row.addStretch()
-        layout.addLayout(btn_row)
+        self.metadata_panel = UploadMetadataPanel()
+        layout.addWidget(self.metadata_panel)
 
         actions = QHBoxLayout()
         self.btn_cancel = QPushButton("İptal")
@@ -439,35 +407,8 @@ class UploadMetadataSettingsDialog(QDialog):
     def apply_styles(self):
         apply_dialog_elevation(self, dark=(current_theme_mode() == "dark"))
 
-    def _load_into_form(self, s: UploadMetadataSettings):
-        self.chk_enabled.setChecked(s.enabled)
-        self.entry_cache_control.setText(s.cache_control)
-        self.entry_charset.setText(s.text_charset)
-        self.entry_inline.setText(s.inline_extensions_csv())
-        self.entry_attachment.setText(s.attachment_extensions_csv())
-
-    def _reset_defaults(self):
-        self._load_into_form(UploadMetadataSettings())
-
-    def _form_to_settings(self) -> UploadMetadataSettings:
-        from src.utils.object_metadata import parse_extension_list, DEFAULT_INLINE_EXTENSIONS, DEFAULT_ATTACHMENT_EXTENSIONS
-
-        inline_raw = self.entry_inline.text().strip()
-        attachment_raw = self.entry_attachment.text().strip()
-        return UploadMetadataSettings(
-            enabled=self.chk_enabled.isChecked(),
-            cache_control=self.entry_cache_control.text().strip(),
-            text_charset=self.entry_charset.text().strip() or 'utf-8',
-            inline_extensions=(
-                parse_extension_list(inline_raw) if inline_raw else set(DEFAULT_INLINE_EXTENSIONS)
-            ),
-            attachment_extensions=(
-                parse_extension_list(attachment_raw) if attachment_raw else set(DEFAULT_ATTACHMENT_EXTENSIONS)
-            ),
-        )
-
     def _save(self):
-        new_settings = self._form_to_settings()
+        new_settings = self.metadata_panel.get_settings()
         if not self.settings.save_upload_metadata_settings(new_settings):
             QMessageBox.warning(self, "Hata", "Ayarlar kaydedilemedi.")
             return
@@ -641,7 +582,7 @@ class UploadDialog(QDialog):
 
         title_row = QHBoxLayout()
         header = QLabel("Dosya Yükle")
-        header.setStyleSheet("font-size: 18px; font-weight: bold;")
+        header.setObjectName("DialogTitle")
         self.lbl_overall_speed = QLabel("")
         self.lbl_overall_speed.setObjectName("UploadOverallSpeed")
         self.lbl_overall_speed.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -729,7 +670,7 @@ class UploadDialog(QDialog):
         header_layout.setSpacing(8)
 
         self.lbl_upload_status = QLabel("Yükleniyor... 0 / 0 dosya")
-        self.lbl_upload_status.setStyleSheet("font-size: 14px; font-weight: bold;")
+        self.lbl_upload_status.setObjectName("UploadPhaseStatus")
         header_layout.addWidget(self.lbl_upload_status)
 
         overall_row = QHBoxLayout()
@@ -784,7 +725,7 @@ class UploadDialog(QDialog):
 
         self.lbl_summary_result = QLabel("")
         self.lbl_summary_result.setAlignment(Qt.AlignCenter)
-        self.lbl_summary_result.setStyleSheet("font-size: 16px;")
+        self.lbl_summary_result.setObjectName("DialogSummaryResult")
         self.lbl_summary_result.setWordWrap(True)
         summary_layout.addWidget(self.lbl_summary_result)
         summary_layout.addStretch()
@@ -1282,7 +1223,7 @@ class DownloadDialog(QDialog):
 
         title_row = QHBoxLayout()
         header = QLabel("Dosya İndir")
-        header.setStyleSheet("font-size: 18px; font-weight: bold;")
+        header.setObjectName("DialogTitle")
         self.lbl_overall_speed = QLabel("")
         self.lbl_overall_speed.setObjectName("UploadOverallSpeed")
         self.lbl_overall_speed.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -1350,7 +1291,7 @@ class DownloadDialog(QDialog):
         header_layout.setSpacing(8)
 
         self.lbl_download_status = QLabel("İndiriliyor... 0 / 0 dosya")
-        self.lbl_download_status.setStyleSheet("font-size: 14px; font-weight: bold;")
+        self.lbl_download_status.setObjectName("UploadPhaseStatus")
         header_layout.addWidget(self.lbl_download_status)
 
         overall_row = QHBoxLayout()
@@ -1401,7 +1342,7 @@ class DownloadDialog(QDialog):
         summary_layout.addStretch()
         self.lbl_summary_result = QLabel("")
         self.lbl_summary_result.setAlignment(Qt.AlignCenter)
-        self.lbl_summary_result.setStyleSheet("font-size: 16px;")
+        self.lbl_summary_result.setObjectName("DialogSummaryResult")
         self.lbl_summary_result.setWordWrap(True)
         summary_layout.addWidget(self.lbl_summary_result)
         summary_layout.addStretch()
@@ -1649,6 +1590,7 @@ class ShareDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         title = QLabel(f"Paylaşım: {filename}" if filename else "Paylaşım süresi seçin")
+        title.setObjectName("DialogTitle")
         title.setWordWrap(True)
         layout.addWidget(title)
         btn_layout = QHBoxLayout()

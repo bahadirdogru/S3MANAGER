@@ -16,6 +16,53 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-16 — v0.0.8 yayınlandı
+
+- **Ne:** Ayarlar merkezi, tema tutarlılığı, S3 API genişletmesi (nesne özellikleri, multipart bakım, batch silme)
+- **Binary'ler:** Windows setup/portable, macOS arm64 dmg, Linux tar.gz + AppImage
+- **Kaynak:** [v0.0.8 release](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.8), [CHANGELOG.md](CHANGELOG.md)
+
+---
+
+## 2026-08-16 — S3 API genişletmesi (metadata, multipart, batch delete)
+
+- **Ne:** boto3 eksikleri — nesne özellikleri dialogu, yarım multipart Bakım sekmesi, toplu silme optimizasyonu
+- **Servis:** `put_object_acl`, `update_object_metadata`, `delete_objects_batch`, `list_incomplete_multipart_uploads`, `abort_multipart_upload`
+- **UI:** `object_properties_dialog.py`, `incomplete_uploads_panel.py`, Ayarlar Bakım sekmesi, önizleme Özellikler butonu
+- **Roadmap:** README — CDN purge (DO API token) ve bucket yönetimi planlandı olarak dokümante
+- **Test:** +4 moto integration test sınıfı (19 test `test_spaces_client.py`)
+
+---
+
+## 2026-08-16 — Light/Dark tema tutarlılığı
+
+- **Ne:** Tüm uygulama içi Qt ekranlarında palet tutarlılığı; global QSS (viewport, read-only input, text edit fallback), dialog inline stiller → objectName + QSS
+- **Tema geçişi:** `apply_app_theme` repolish + `update_dialog_elevation`; Ayarlar dialogu açıkken toolbar switch
+- **FormFrame:** `bg_panel` kart stili; Ayarlar Bağlantı scroll viewport düzeltmesi
+- **Dosyalar:** `styles.py`, `settings_dialog.py`, `dialogs.py`, `preview_panel.py`, `UI.md`
+
+---
+
+## 2026-08-16 — Ayarlar menüsü (tab'lı merkez)
+
+- **Ne:** Toolbar'da tek **Ayarlar** butonu; `SettingsDialog` ile 5 sekme (Bağlantı, Yükleme Metadata, Görünüm, Günlük, Yardım)
+- **Kaldırıldı:** Toolbar Yardım menüsü ve Metadata butonu
+- **Yeni:** `settings_dialog.py`, `upload_metadata_panel.py`, `utils/log_viewer.py` (`read_log_tail`)
+- **Tema:** Görünüm sekmesi ↔ toolbar `ThemeSwitch` çift yönlü senkron
+- **Dosyalar:** `main_window.py`, `dialogs.py`, `styles.py`, `UI.md`, `LLM.md`
+
+---
+
+## 2026-08-16 — İki satır toolbar revizyonu
+
+- **Ne:** `QMenuBar` ve ayrı `BreadcrumbFrame` kaldırıldı; tek `ToolbarFrame` iki satır
+- **Satır 1:** Bağlan, Yükle, Yenile, Paylaş, İndir, Kopyala, Taşı, Yeniden Adlandır, Yardım (menü), Metadata, `ConnectionIndicator`, `ThemeSwitch`
+- **Satır 2:** Breadcrumb, arama (min 180px stretch), Geri
+- **Bağlantı:** Yeşil/kırmızı nokta + tooltip; tıklayınca Bağlan dialogu
+- **Dosyalar:** `main_window.py`, `connection_indicator.py`, `styles.py`, `UI.md`
+
+---
+
 ## 2026-08-11 — v0.0.7 yayınlandı
 
 - **Ne:** Dosya yöneticisi tamamlama, önizleme paneli, pytest test altyapısı

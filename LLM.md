@@ -30,11 +30,19 @@ S3MANAGER/
 │   │   ├── settings.py          # ~/.s3manager/config.ini (+ updates dismissed)
 │   │   └── credentials.py
 │   ├── ui/qt/
-│   │   ├── main_window.py       # Workers, MainWindow, update check, Yardım menüsü
+│   │   ├── main_window.py       # Workers, MainWindow, iki satır toolbar, btn_settings
 │   │   ├── models.py
 │   │   ├── dialogs.py
+│   │   ├── settings_dialog.py   # Tab'lı Ayarlar (Bağlantı, Metadata, Görünüm, Günlük, Bakım, Yardım)
+│   │   ├── object_properties_dialog.py  # Nesne metadata / ACL
+│   │   ├── incomplete_uploads_panel.py  # Yarım multipart (Bakım sekmesi)
+│   │   ├── upload_metadata_panel.py  # Metadata form widget
 │   │   ├── styles.py            # ThemePalette, build_stylesheet, apply_app_theme
-│   │   └── theme_switch.py      # Toolbar ay/güneş tema toggle
+│   │   ├── theme_switch.py      # Toolbar tema toggle
+│   │   ├── connection_indicator.py  # Bağlantı göstergesi (yeşil/kırmızı)
+│   │   ├── preview_panel.py
+│   │   ├── transfer_panel.py
+│   │   └── file_tree_view.py
 │   ├── services/
 │   │   ├── spaces_client.py
 │   │   ├── upload_service.py
@@ -43,6 +51,7 @@ S3MANAGER/
 │   │   └── update_service.py    # GitHub Releases API
 │   └── utils/
 │       ├── helpers.py
+│       ├── log_viewer.py        # read_log_tail (günlük sekmesi)
 │       └── object_metadata.py   # MIME tespiti, upload ExtraArgs
 ├── assets/                      # icon.png, icon.ico, icon.icns (macOS build)
 ├── .github/workflows/
@@ -65,11 +74,12 @@ S3MANAGER/
 |-------|------|
 | `main_window.py` | UI koordinasyon, QThread workers, `_stop_list_worker` / `_detach_list_worker` |
 | `models.py` | `FileModel`: `append_items`, `canFetchMore`, ACL lazy |
-| `spaces_client.py` | `list_objects_page`, upload/download/delete |
+| `spaces_client.py` | `list_objects_page`, CRUD, `put_object_acl`, `update_object_metadata`, `delete_objects_batch`, multipart list/abort |
 | `upload_service.py` | Multipart upload, progress callbacks, metadata ExtraArgs |
 | `object_metadata.py` | `guess_content_type`, `build_upload_extra_args`, `UploadMetadataSettings` |
 | `listing_cache.py` | Prefix bazlı liste cache (TTL 60s) |
-| `dialogs.py` | Login, Upload, ShareDialog, UploadMetadataSettingsDialog |
+| `dialogs.py` | Login, Upload, ShareDialog, UploadMetadataSettingsDialog (wrapper) |
+| `settings_dialog.py` | SettingsDialog — Bağlantı, Metadata, Görünüm, Günlük, Bakım, Yardım sekmeleri |
 | `styles.py` | `ThemePalette`, `apply_app_theme()`, `build_stylesheet()` — QApplication seviyesinde tema |
 | `theme_switch.py` | Toolbar `ThemeSwitch` widget (🌙/☀️) |
 | `settings.py` | config.ini; `[upload_metadata]`, `[appearance] theme` |

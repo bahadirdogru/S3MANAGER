@@ -113,6 +113,67 @@ class TestSpacesClientAcl:
         )
         assert spaces_client.get_object_acl("public.txt") == "public-read"
 
+    def test_put_object_acl(self, spaces_client):
+        spaces_client.client.put_object(
+            Bucket=spaces_client.bucket,
+            Key="acl-test.txt",
+            Body=b"data",
+            ACL="private",
+        )
+        spaces_client.put_object_acl("acl-test.txt", "public-read")
+        assert spaces_client.get_object_acl("acl-test.txt") == "public-read"
+        spaces_client.put_object_acl("acl-test.txt", "private")
+        assert spaces_client.get_object_acl("acl-test.txt") == "private"
+
+
+@pytest.mark.integration
+class TestSpacesClientMetadataUpdate:
+    def test_update_object_metadata(self, sample_s3_objects):
+        client = sample_s3_objects
+        client.update_object_metadata(
+            "docs/readme.txt",
+            content_type="text/plain",
+            cache_control="public, max-age=60",
+            metadata={"author": "test"},
+        )
+        meta = client.head_object("docs/readme.txt")
+        assert meta["content_type"] == "text/plain"
+        assert meta["cache_control"] == "public, max-age=60"
+        assert meta["metadata"].get("author") == "test"
+
+
+@pytest.mark.integration
+class TestSpacesClientBatchDelete:
+    def test_delete_objects_batch(self, spaces_client):
+        for i in range(3):
+            spaces_client.client.put_object(
+                Bucket=spaces_client.bucket,
+                Key=f"batch/del{i}.txt",
+                Body=b"x",
+            )
+        count = spaces_client.delete_objects_batch([
+            "batch/del0.txt",
+            "batch/del1.txt",
+            "batch/del2.txt",
+        ])
+        assert count == 3
+        page = spaces_client.list_objects_page(prefix="batch/")
+        assert len(page["files"]) == 0
+
+
+@pytest.mark.integration
+class TestSpacesClientMultipart:
+    def test_list_and_abort_multipart(self, spaces_client):
+        s3 = spaces_client.client
+        bucket = spaces_client.bucket
+        resp = s3.create_multipart_upload(Bucket=bucket, Key="multipart/partial.bin")
+        upload_id = resp["UploadId"]
+        uploads = spaces_client.list_incomplete_multipart_uploads(prefix="multipart/")
+        assert any(u["upload_id"] == upload_id for u in uploads)
+        spaces_client.abort_multipart_upload("multipart/partial.bin", upload_id)
+        uploads_after = spaces_client.list_incomplete_multipart_uploads(prefix="multipart/")
+        assert not any(u["upload_id"] == upload_id for u in uploads_after)
+
 
 @pytest.mark.integration
 class TestSpacesClientNormalizeKey:

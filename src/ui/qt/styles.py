@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional, TYPE_CHECKING
 
-from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QApplication, QGraphicsDropShadowEffect
+from PySide6.QtGui import QColor, QPalette
+from PySide6.QtWidgets import QApplication, QGraphicsDropShadowEffect, QAbstractItemView
 
 if TYPE_CHECKING:
     from src.config.settings import Settings
@@ -118,6 +118,51 @@ def apply_dialog_elevation(widget, dark: Optional[bool] = None):
     widget.setGraphicsEffect(effect)
 
 
+def update_dialog_elevation(widget):
+    """Tema değişiminde dialog gölgesini yeniden uygular."""
+    widget.setGraphicsEffect(None)
+    apply_dialog_elevation(widget)
+
+
+def apply_item_view_palette(view: QAbstractItemView):
+    """QTableWidget/QTreeView — Windows'ta QSS bazen viewport'a uygulanmaz."""
+    p = current_palette()
+    pal = view.palette()
+    pal.setColor(QPalette.ColorRole.Base, QColor(p.bg_panel))
+    pal.setColor(QPalette.ColorRole.AlternateBase, QColor(p.bg_elevated))
+    pal.setColor(QPalette.ColorRole.Text, QColor(p.text))
+    pal.setColor(QPalette.ColorRole.Window, QColor(p.bg_panel))
+    pal.setColor(QPalette.ColorRole.WindowText, QColor(p.text))
+    pal.setColor(QPalette.ColorRole.Highlight, QColor(p.green_dark))
+    pal.setColor(QPalette.ColorRole.HighlightedText, QColor("#FFFFFF"))
+    view.setPalette(pal)
+    view.setAutoFillBackground(True)
+
+    header = view.horizontalHeader()
+    if header is not None:
+        hpal = header.palette()
+        hpal.setColor(QPalette.ColorRole.Button, QColor(p.bg_elevated))
+        hpal.setColor(QPalette.ColorRole.ButtonText, QColor(p.text))
+        hpal.setColor(QPalette.ColorRole.Window, QColor(p.bg_elevated))
+        hpal.setColor(QPalette.ColorRole.WindowText, QColor(p.text))
+        header.setPalette(hpal)
+        header.setAutoFillBackground(True)
+
+
+def _repolish_top_levels():
+    """QSS güncellemesi sonrası üst düzey widget'ları yeniden cilalar."""
+    app = QApplication.instance()
+    if app is None:
+        return
+    for widget in app.topLevelWidgets():
+        style = widget.style()
+        style.unpolish(widget)
+        style.polish(widget)
+        widget.update()
+        if widget.objectName() == "ElevatedDialog":
+            update_dialog_elevation(widget)
+
+
 def build_stylesheet(palette: ThemePalette) -> str:
     p = palette
     return f"""
@@ -178,6 +223,72 @@ def build_stylesheet(palette: ThemePalette) -> str:
     QFrame#ToolbarFrame {{
         background-color: {p.bg_panel};
         border-bottom: 1px solid {p.border};
+        padding: 0;
+    }}
+
+    QWidget#ToolbarBreadcrumbHost {{
+        background: transparent;
+    }}
+
+    QFrame#ConnectionIndicator {{
+        background: transparent;
+        border: none;
+    }}
+
+    QLabel#ConnectionIndicatorDot {{
+        border-radius: 6px;
+        background-color: {WA_ERROR};
+    }}
+
+    QLabel#ConnectionIndicatorDot[connectionState="connected"] {{
+        background-color: {p.green};
+    }}
+
+    QLabel#ConnectionIndicatorDot[connectionState="connecting"] {{
+        background-color: {WA_WARNING};
+    }}
+
+    QLabel#ConnectionIndicatorDot[connectionState="disconnected"] {{
+        background-color: {WA_ERROR};
+    }}
+
+    QPushButton#ToolbarButton {{
+        background-color: {p.green};
+        color: #FFFFFF;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: bold;
+        border: none;
+    }}
+
+    QPushButton#ToolbarButton:hover {{
+        background-color: {p.green_hover};
+    }}
+
+    QPushButton#ToolbarButton:disabled {{
+        background-color: {p.bg_hover};
+        color: {p.text_muted};
+    }}
+
+    QToolButton#ToolbarMenuButton {{
+        background-color: {p.green};
+        color: #FFFFFF;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: bold;
+        border: none;
+    }}
+
+    QToolButton#ToolbarMenuButton:hover {{
+        background-color: {p.green_hover};
+    }}
+
+    QToolButton#ToolbarMenuButton::menu-indicator {{
+        subcontrol-origin: padding;
+        subcontrol-position: right center;
+        right: 6px;
     }}
 
     QFrame#BreadcrumbFrame {{
@@ -186,9 +297,99 @@ def build_stylesheet(palette: ThemePalette) -> str:
     }}
 
     QFrame#FormFrame {{
-        background-color: {p.bg_elevated};
+        background-color: {p.bg_panel};
         border: 1px solid {p.border_subtle};
         border-radius: 12px;
+    }}
+
+    QLabel#DialogTitle {{
+        font-size: 18px;
+        font-weight: bold;
+        color: {p.text};
+    }}
+
+    QLabel#DialogTitleLarge {{
+        font-size: 22px;
+        font-weight: bold;
+        color: {p.text};
+    }}
+
+    QLabel#DialogSubtitle {{
+        font-size: 14px;
+        font-weight: bold;
+        color: {p.text};
+    }}
+
+    QLabel#DialogSummaryResult {{
+        font-size: 16px;
+        color: {p.text};
+    }}
+
+    QLabel#UploadPhaseStatus {{
+        font-size: 14px;
+        font-weight: bold;
+        color: {p.text};
+    }}
+
+    QLabel#StatusSuccess {{
+        color: {WA_SUCCESS};
+        font-size: 11px;
+        font-weight: bold;
+    }}
+
+    QLabel#StatusError {{
+        color: {WA_ERROR};
+        font-size: 13px;
+    }}
+
+    QTabWidget#SettingsTabWidget::pane {{
+        border: 1px solid {p.border_subtle};
+        border-radius: 8px;
+        background-color: {p.bg_panel};
+        top: -1px;
+    }}
+
+    QWidget#IncompleteUploadsPanel {{
+        background-color: {p.bg_panel};
+        color: {p.text};
+    }}
+
+    QTabWidget#SettingsTabWidget QTabBar::tab {{
+        background-color: {p.bg_elevated};
+        color: {p.text_muted};
+        border: 1px solid {p.border_subtle};
+        border-bottom: none;
+        border-top-left-radius: 6px;
+        border-top-right-radius: 6px;
+        padding: 8px 14px;
+        margin-right: 2px;
+        font-size: 13px;
+    }}
+
+    QTabWidget#SettingsTabWidget QTabBar::tab:selected {{
+        background-color: {p.green};
+        color: #FFFFFF;
+        border-color: {p.green};
+    }}
+
+    QTabWidget#SettingsTabWidget QTabBar::tab:hover:!selected {{
+        background-color: {p.bg_hover};
+        color: {p.text};
+    }}
+
+    QPlainTextEdit#LogViewer {{
+        background-color: {p.bg_elevated};
+        color: {p.text};
+        border: 1px solid {p.border_subtle};
+        border-radius: 8px;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 12px;
+        padding: 8px;
+    }}
+
+    QLabel#SettingsInfoLabel {{
+        color: {p.text_muted};
+        font-size: 13px;
     }}
 
     QFrame#UploadHeader {{
@@ -247,6 +448,15 @@ def build_stylesheet(palette: ThemePalette) -> str:
         background-color: {p.border};
     }}
 
+    QPushButton#PrimaryButton {{
+        background-color: {p.green};
+        color: #FFFFFF;
+    }}
+
+    QPushButton#PrimaryButton:hover {{
+        background-color: {p.green_hover};
+    }}
+
     QPushButton#BreadcrumbButton {{
         background-color: transparent;
         color: {p.green_bright};
@@ -278,6 +488,12 @@ def build_stylesheet(palette: ThemePalette) -> str:
 
     QLineEdit:focus {{
         border: 1px solid {p.green};
+    }}
+
+    QLineEdit:read-only {{
+        background-color: {p.bg_panel};
+        color: {p.text};
+        border: 1px solid {p.border_subtle};
     }}
 
     QComboBox {{
@@ -369,6 +585,50 @@ def build_stylesheet(palette: ThemePalette) -> str:
         border-bottom: 2px solid {p.green_dark};
         font-weight: bold;
         font-size: 13px;
+    }}
+
+    QTableView,
+    QTableWidget {{
+        background-color: {p.bg_panel};
+        color: {p.text};
+        border: 1px solid {p.border_subtle};
+        border-radius: 6px;
+        gridline-color: {p.border_subtle};
+        alternate-background-color: {p.bg_elevated};
+    }}
+
+    QTableView::viewport,
+    QTableWidget::viewport {{
+        background-color: {p.bg_panel};
+    }}
+
+    QTableView::item,
+    QTableWidget::item {{
+        color: {p.text};
+        background-color: {p.bg_panel};
+        padding: 4px 6px;
+    }}
+
+    QTableView::item:alternate,
+    QTableWidget::item:alternate {{
+        background-color: {p.bg_elevated};
+    }}
+
+    QTableView::item:selected,
+    QTableWidget::item:selected {{
+        background-color: {p.green_dark};
+        color: #FFFFFF;
+    }}
+
+    QTableView::item:hover,
+    QTableWidget::item:hover {{
+        background-color: {p.bg_hover};
+    }}
+
+    QTableView QTableCornerButton::section,
+    QTableWidget QTableCornerButton::section {{
+        background-color: {p.bg_elevated};
+        border: none;
     }}
 
     QLabel {{
@@ -618,6 +878,46 @@ def build_stylesheet(palette: ThemePalette) -> str:
         background-color: {p.bg_panel};
     }}
 
+    QScrollArea::viewport {{
+        background-color: {p.bg_panel};
+        border: none;
+    }}
+
+    QScrollArea#SettingsScrollArea {{
+        background-color: {p.bg_panel};
+        border: none;
+    }}
+
+    QScrollArea#SettingsScrollArea::viewport {{
+        background-color: {p.bg_panel};
+        border: none;
+    }}
+
+    QWidget#SettingsScrollContent {{
+        background-color: {p.bg_panel};
+        color: {p.text};
+    }}
+
+    QTextEdit {{
+        background-color: {p.bg_elevated};
+        color: {p.text};
+        border: none;
+    }}
+
+    QTextEdit QAbstractScrollArea::viewport {{
+        background-color: {p.bg_elevated};
+    }}
+
+    QPlainTextEdit {{
+        background-color: {p.bg_elevated};
+        color: {p.text};
+        border: none;
+    }}
+
+    QPlainTextEdit QAbstractScrollArea::viewport {{
+        background-color: {p.bg_elevated};
+    }}
+
     QScrollArea#UploadScroll {{
         background-color: {p.bg_panel};
         border: 1px solid {p.border_subtle};
@@ -672,6 +972,31 @@ def build_stylesheet(palette: ThemePalette) -> str:
         background-color: {p.bg_elevated};
     }}
 
+    QScrollArea#PreviewScroll::viewport {{
+        background-color: {p.bg_elevated};
+        border: none;
+    }}
+
+    QWidget#PreviewScrollContent {{
+        background-color: {p.bg_elevated};
+        color: {p.text};
+    }}
+
+    QTextEdit#PreviewTextView {{
+        background-color: {p.bg_elevated};
+        color: {p.text};
+        border: none;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 12px;
+        padding: 8px;
+        selection-background-color: {p.green};
+        selection-color: #FFFFFF;
+    }}
+
+    QTextEdit#PreviewTextView QAbstractScrollArea::viewport {{
+        background-color: {p.bg_elevated};
+    }}
+
     QFrame#TransferPanel {{
         background-color: {p.bg_panel};
         border-top: 1px solid {p.border_subtle};
@@ -680,7 +1005,7 @@ def build_stylesheet(palette: ThemePalette) -> str:
     QLabel#TransferPanelTitle {{
         font-size: 12px;
         font-weight: bold;
-        color: {p.text_muted};
+        color: {p.text};
     }}
 
     QListWidget#TransferList {{
@@ -712,6 +1037,7 @@ def apply_app_theme(mode: str, settings: Optional["Settings"] = None, persist: b
     app = QApplication.instance()
     if app is not None:
         app.setStyleSheet(qss)
+        _repolish_top_levels()
     if persist and settings is not None:
         settings.save_theme_mode(normalized)
     return qss

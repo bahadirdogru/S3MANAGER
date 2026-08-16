@@ -417,6 +417,7 @@ class SpacesClient:
             response = self.client.head_object(Bucket=self.bucket, Key=key)
             return {
                 'content_type': response.get('ContentType', ''),
+                'cache_control': response.get('CacheControl', '') or '',
                 'content_length': response.get('ContentLength', 0),
                 'last_modified': response.get('LastModified'),
                 'metadata': response.get('Metadata', {}),
@@ -435,6 +436,97 @@ class SpacesClient:
             return response['Body'].read()
         except ClientError as e:
             raise Exception(f"Dosya okuma hatası: {str(e)}")
+
+    def put_object_acl(self, key: str, acl: str) -> bool:
+        """Mevcut nesnenin ACL'sini günceller (private veya public-read)."""
+        try:
+            key = self._normalize_key(key)
+            normalized_acl = 'public-read' if acl == 'public-read' else 'private'
+            self.client.put_object_acl(
+                Bucket=self.bucket,
+                Key=key,
+                ACL=normalized_acl,
+            )
+            return True
+        except ClientError as e:
+            raise Exception(f"ACL güncelleme hatası: {str(e)}")
+
+    def update_object_metadata(
+        self,
+        key: str,
+        content_type: Optional[str] = None,
+        cache_control: Optional[str] = None,
+        metadata: Optional[Dict[str, str]] = None,
+    ) -> bool:
+        """Nesne metadata'sını copy_object + MetadataDirective REPLACE ile günceller."""
+        try:
+            key = self._normalize_key(key)
+            copy_source = {'Bucket': self.bucket, 'Key': key}
+            kwargs: Dict[str, Any] = {
+                'Bucket': self.bucket,
+                'Key': key,
+                'CopySource': copy_source,
+                'MetadataDirective': 'REPLACE',
+            }
+            if content_type is not None:
+                kwargs['ContentType'] = content_type
+            if cache_control is not None:
+                kwargs['CacheControl'] = cache_control
+            if metadata is not None:
+                kwargs['Metadata'] = metadata
+            self.client.copy_object(**kwargs)
+            return True
+        except ClientError as e:
+            raise Exception(f"Metadata güncelleme hatası: {str(e)}")
+
+    def delete_objects_batch(self, keys: List[str]) -> int:
+        """Birden fazla nesneyi delete_objects ile siler (max 1000/chunk)."""
+        try:
+            normalized = [self._normalize_key(k) for k in keys if k]
+            if not normalized:
+                return 0
+            deleted = 0
+            for i in range(0, len(normalized), 1000):
+                batch = normalized[i:i + 1000]
+                self.client.delete_objects(
+                    Bucket=self.bucket,
+                    Delete={'Objects': [{'Key': k} for k in batch]},
+                )
+                deleted += len(batch)
+            return deleted
+        except ClientError as e:
+            raise Exception(f"Toplu silme hatası: {str(e)}")
+
+    def list_incomplete_multipart_uploads(self, prefix: str = '') -> List[Dict[str, Any]]:
+        """Yarım kalan multipart yüklemeleri listeler."""
+        try:
+            if prefix.startswith('/'):
+                prefix = prefix[1:]
+            uploads: List[Dict[str, Any]] = []
+            paginator = self.client.get_paginator('list_multipart_uploads')
+            for page in paginator.paginate(Bucket=self.bucket, Prefix=prefix):
+                for upload in page.get('Uploads', []):
+                    uploads.append({
+                        'key': upload.get('Key', ''),
+                        'upload_id': upload.get('UploadId', ''),
+                        'initiated': upload.get('Initiated'),
+                    })
+            return uploads
+        except ClientError as e:
+            raise Exception(f"Multipart listeleme hatası: {str(e)}")
+
+    def abort_multipart_upload(self, key: str, upload_id: str) -> bool:
+        """Yarım multipart yüklemeyi iptal eder."""
+        try:
+            key = self._normalize_key(key)
+            self.client.abort_multipart_upload(
+                Bucket=self.bucket,
+                Key=key,
+                UploadId=upload_id,
+            )
+            return True
+        except ClientError as e:
+            raise Exception(f"Multipart iptal hatası: {str(e)}")
 
     def create_presigned_url(self, key: str, expiration: int = 3600) -> str:
         try:

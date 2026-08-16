@@ -67,9 +67,21 @@ Kaynak: `src/ui/qt/styles.py` — `ThemePalette`, `build_stylesheet()`, `apply_a
 - **Border**: `#D1D7DB`
 - **Border Subtle**: `#E9EDEF`
 
-### ThemeSwitch (toolbar)
+### Tema tutarlılığı kuralları
 
-Kaynak: `src/ui/qt/theme_switch.py` — toolbar sağ üst, `← Geri` öncesi.
+- Tüm arka plan ve metin renkleri `ThemePalette` üzerinden `build_stylesheet()` ile uygulanır; widget’larda hardcode hex kullanılmaz (semantik `WA_ERROR` / `WA_SUCCESS` istisna).
+- Yeni bileşen: `objectName` ata → kural ekle [`styles.py`](src/ui/qt/styles.py).
+- Zorunlu global kurallar: `QScrollArea::viewport`, `QLineEdit:read-only`, genel `QTextEdit` / `QPlainTextEdit` fallback.
+- Kartlar: `QFrame#FormFrame` → `bg_panel` + `border_subtle` (light/dark palet değişkenleri).
+- Dialog tipografi: `DialogTitle`, `DialogTitleLarge`, `DialogSubtitle`, `UploadPhaseStatus`, `DialogSummaryResult`, `StatusSuccess`, `StatusError`.
+- Tema geçişi: `apply_app_theme()` → `app.setStyleSheet` + `_repolish_top_levels()` + açık `ElevatedDialog` gölge güncelleme (`update_dialog_elevation`).
+- **İstisna:** `QMessageBox` native Windows/macOS görünümü — tema ile tam uyum beklenmez.
+
+**Manuel test matrisi (Dark + Light):** ana liste/önizleme, Ayarlar (5 sekme), Bağlan, Yükle/İndir (3 faz), Paylaş/Hedef yol; dialog açıkken toolbar tema switch.
+
+### ThemeSwitch (toolbar satır 1, sağ uç)
+
+Kaynak: `src/ui/qt/theme_switch.py` — `ConnectionIndicator` yanında.
 
 | Özellik | Değer |
 |---------|-------|
@@ -77,7 +89,52 @@ Kaynak: `src/ui/qt/theme_switch.py` — toolbar sağ üst, `← Geri` öncesi.
 | objectName | `ThemeSwitch` |
 | Thumb | `ThemeSwitchThumb` (28×24 px, yeşil pill) |
 | İkonlar | `ThemeSwitchIcon` — sol 🌙 (koyu), sağ ☀️ (açık) |
-| Davranış | Sol/sağ yarı tıklama veya toggle; `theme_changed` signal |
+| Davranış | Sol/sağ yarı tıklama; `theme_changed` signal |
+
+### ConnectionIndicator (toolbar satır 1)
+
+Kaynak: `src/ui/qt/connection_indicator.py` — tema switch solunda.
+
+| Özellik | Değer |
+|---------|-------|
+| objectName | `ConnectionIndicator`, alt nokta `ConnectionIndicatorDot` |
+| Yeşil | Bağlı (`connectionState=connected`) |
+| Kırmızı | Bağlı değil / hata (`disconnected`) |
+| Sarı | Bağlanıyor (`connecting`, isteğe bağlı) |
+| Hover | Tooltip (bucket, bölge, endpoint) |
+| Tıklama | Bağlan dialogu |
+
+### İki satır Toolbar (`ToolbarFrame`)
+
+`QMenuBar` kaldırıldı; tüm üst navigasyon tek `ToolbarFrame` içinde:
+
+```
+Satır 1: [Bağlan][Yükle]…[Yeniden Adlandır]  stretch  [Ayarlar][●][ThemeSwitch]
+Satır 2: [Breadcrumb …]  [SearchEdit — kalan genişlik]  [← Geri]
+```
+
+| objectName | Bileşen |
+|------------|---------|
+| `ToolbarButton` | Satır 1 aksiyon `QPushButton` (Ayarlar dahil) |
+| `ToolbarBreadcrumbHost` | Satır 2 breadcrumb konteyneri |
+| `SearchEdit` | Arama — kalan tüm genişlik; breadcrumb uzadığında küçülür (min ~120px) |
+| `SecondaryButton` | Geri butonu |
+
+### Ayarlar dialogu (`SettingsDialog`)
+
+Toolbar **Ayarlar** butonu → modal `QDialog#ElevatedDialog` (~640×520), `QTabWidget#SettingsTabWidget`:
+
+| Sekme | İçerik |
+|-------|--------|
+| Bağlantı | Config yolu, bucket/bölge/endpoint, maskeli key/secret, güvenlik notu; Bağlantıyı düzenle → `LoginDialog`; Config klasörünü aç |
+| Yükleme Metadata | `UploadMetadataPanel` — otomatik Content-Type / Disposition / Cache-Control kuralları |
+| Görünüm | Koyu / Açık tema; önizleme anında; Kaydet ile persist; toolbar `ThemeSwitch` ile çift yönlü senkron |
+| Günlük | `app.log` yolu, `QPlainTextEdit#LogViewer` (son ~400 satır), Yenile / klasör aç / panoya kopyala |
+| Yardım | Sürüm, GitHub Releases, güncelleme kontrolü, GPL-3.0 notu |
+
+Alt: **Kaydet** / **İptal** — metadata ve görünüm değişiklikleri Kaydet ile `config.ini`'ye yazılır.
+
+Eski toolbar **Yardım** menüsü ve **Metadata** butonu kaldırıldı; işlevleri bu dialoga taşındı.
 
 ### Katman Hiyerarşisi (derinlik)
 
@@ -526,11 +583,11 @@ logger.debug("Signal emit edildi")
 
 ## Breadcrumb ve navigasyon
 
-- Breadcrumb: toolbar altında `BreadcrumbFrame` içinde tıklanabilir segmentler
+- Breadcrumb: `ToolbarFrame` 2. satırında `ToolbarBreadcrumbHost` içinde
 - Segment butonları: `QPushButton#BreadcrumbButton` — şeffaf arka plan, `#25D366` metin
 - Ayırıcı: `QLabel#BreadcrumbSep` — `#8696A0`
-- Durum metni: `QLabel#StatusLabel` — `#AEBAC1`
-- Geri butonu: root'ta disabled
+- Bağlantı durumu: `ConnectionIndicator` (yeşil/kırmızı nokta + tooltip); işlem mesajları tooltip üzerinden
+- Geri butonu: 2. satır sağ; root'ta disabled
 
 ## Klavye kısayolları
 

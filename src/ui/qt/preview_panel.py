@@ -48,6 +48,7 @@ class PreviewPanel(QFrame):
 
     download_requested = Signal()
     share_requested = Signal()
+    properties_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -74,12 +75,18 @@ class PreviewPanel(QFrame):
         btn_row = QHBoxLayout()
         self.btn_download = QPushButton("İndir")
         self.btn_share = QPushButton("Paylaş")
+        self.btn_properties = QPushButton("Özellikler")
+        self.btn_properties.setObjectName("SecondaryButton")
         self.btn_download.setEnabled(False)
         self.btn_share.setEnabled(False)
+        self.btn_properties.setEnabled(False)
+        self.btn_properties.setEnabled(False)
         self.btn_download.clicked.connect(self.download_requested.emit)
         self.btn_share.clicked.connect(self.share_requested.emit)
+        self.btn_properties.clicked.connect(self.properties_requested.emit)
         btn_row.addWidget(self.btn_download)
         btn_row.addWidget(self.btn_share)
+        btn_row.addWidget(self.btn_properties)
         btn_row.addStretch()
         layout.addLayout(btn_row)
 
@@ -89,6 +96,7 @@ class PreviewPanel(QFrame):
         self.scroll.setAlignment(Qt.AlignCenter)
 
         self.content_host = QWidget()
+        self.content_host.setObjectName("PreviewScrollContent")
         self.content_layout = QVBoxLayout(self.content_host)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
         self.content_layout.setAlignment(Qt.AlignCenter)
@@ -105,6 +113,7 @@ class PreviewPanel(QFrame):
         self.content_layout.addWidget(self.image_label)
 
         self.text_view = QTextEdit()
+        self.text_view.setObjectName("PreviewTextView")
         self.text_view.setReadOnly(True)
         self.text_view.setVisible(False)
         self.content_layout.addWidget(self.text_view)
@@ -121,6 +130,7 @@ class PreviewPanel(QFrame):
         self.lbl_meta.setText("Dosya seçin")
         self.btn_download.setEnabled(False)
         self.btn_share.setEnabled(False)
+        self.btn_properties.setEnabled(False)
         self._show_placeholder("Önizlemek için tek bir dosya seçin")
 
     def show_file(self, key: str, name: str):
@@ -135,6 +145,7 @@ class PreviewPanel(QFrame):
         self.lbl_meta.setText("Yükleniyor...")
         self.btn_download.setEnabled(True)
         self.btn_share.setEnabled(True)
+        self.btn_properties.setEnabled(True)
         self._show_placeholder("Yükleniyor...")
 
         self._worker = PreviewLoadWorker(self._client, key)

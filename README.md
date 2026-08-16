@@ -130,13 +130,25 @@ S3 uyumlu depolama (boto3) için önceliklendirilmiş geliştirme planı. Maddel
 |---------|----------|-------|
 | **Çoklu bağlantı profili** | Birden fazla bucket/endpoint kaydı; hızlı geçiş | Planlandı |
 | **Kimlik bilgisi güvenliği** | OS keyring veya şifreli credential depolama | Planlandı |
+| **Presigned upload URL** | `put_object` presigned paylaşım | Planlandı |
+| **Public / CDN URL gösterimi** | public-read nesneler için doğrudan URL | Planlandı |
 
-### Orta vade — üretkenlik ve görünürlük
+### Orta vade — üretkenlik ve yönetim
 
 | Özellik | Açıklama | Durum |
 |---------|----------|-------|
-| **Nesne metadata paneli** | `Content-Type`, `Cache-Control`, özel `x-amz-meta-*` görüntüleme/düzenleme | Planlandı |
 | **Yükleme devam ettirme** | Kesilen multipart upload'ların resume edilmesi | Planlandı |
+| **Bucket yönetimi (boto3)** | CORS, lifecycle, versioning, policy, logging, website | Planlandı |
+| **Nesne etiketleri (tagging)** | `get/put_object_tagging` — DO uyumluluğu test gerekli | Planlandı |
+
+### DigitalOcean Platform API (boto3 dışı)
+
+Spaces access key ile **çalışmaz**; ayrı **DO API token** gerekir.
+
+| Özellik | API | Durum |
+|---------|-----|-------|
+| **CDN cache purge** | `DELETE /v2/cdn/endpoints/{id}/cache` | Planlandı |
+| CDN endpoint listesi / TTL / custom domain | `/v2/cdn/endpoints` | Planlandı |
 
 ### Geç vade — sonra
 
@@ -146,6 +158,9 @@ S3 uyumlu depolama (boto3) için önceliklendirilmiş geliştirme planı. Maddel
 
 ### Tamamlanan (v0.0.7+)
 
+- **Nesne özellikleri** — Content-Type, Cache-Control, `x-amz-meta-*`, ACL düzenleme (context menu / önizleme)
+- **Yarım multipart yönetimi** — Ayarlar → Bakım sekmesi (listele / iptal)
+- **Toplu dosya silme** — `delete_objects` batch API
 - **Yeniden adlandırma / taşıma / kopyalama** — context menu, toolbar, F2/Ctrl+C/Ctrl+X
 - **Prefix arama ve filtre** — toolbar arama kutusu (mevcut klasör)
 - **Sürükle-bırak yükleme** — ana pencereye dosya bırakma
@@ -161,15 +176,15 @@ S3 uyumlu depolama (boto3) için önceliklendirilmiş geliştirme planı. Maddel
 
 ## Releases
 
-En son sürüm: **[v0.0.7](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.7)** — [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz.
+En son sürüm: **[v0.0.8](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.8)** — [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz. Değişiklik listesi: [CHANGELOG.md](CHANGELOG.md).
 
 | Platform | Dosya |
 |----------|-------|
-| Windows | `S3MANAGER-0.0.7-windows-setup.exe` (NSIS installer) veya `S3MANAGER-0.0.7-windows-portable.zip` |
-| macOS (Apple Silicon) | `S3MANAGER-0.0.7-macos-arm64.dmg` |
-| Linux x86_64 | `S3MANAGER-0.0.7-linux-x86_64.tar.gz` veya `S3MANAGER-0.0.7-linux-x86_64.AppImage` |
+| Windows | `S3MANAGER-0.0.8-windows-setup.exe` (NSIS installer) veya `S3MANAGER-0.0.8-windows-portable.zip` |
+| macOS (Apple Silicon) | `S3MANAGER-0.0.8-macos-arm64.dmg` |
+| Linux x86_64 | `S3MANAGER-0.0.8-linux-x86_64.tar.gz` veya `S3MANAGER-0.0.8-linux-x86_64.AppImage` |
 
-Uygulama açılışında GitHub Releases üzerinden otomatik güncelleme kontrolü yapılır. **Yardım → Güncellemeleri Kontrol Et** ile manuel kontrol de mümkündür. Yeni sürüm bulunursa indirme sayfası tarayıcıda açılır.
+Uygulama açılışında GitHub Releases üzerinden otomatik güncelleme kontrolü yapılır. **Ayarlar → Yardım** sekmesinden manuel kontrol de mümkündür. Yeni sürüm bulunursa indirme sayfası tarayıcıda açılır.
 
 > **Not:** Binary'ler kod imzalı değildir; Windows Defender / macOS Gatekeeper uyarısı verebilir.
 
@@ -177,9 +192,9 @@ Uygulama açılışında GitHub Releases üzerinden otomatik güncelleme kontrol
 
 ```bash
 # src/version.py sürümünü güncelle, commit et
-git tag v0.0.7
+git tag v0.0.8
 git push origin main
-git push origin v0.0.7
+git push origin v0.0.8
 ```
 
 `v*.*.*` tag push edildiğinde GitHub Actions otomatik olarak Windows, macOS ve Linux'ta build alır ve [GitHub Release](https://github.com/bahadirdogru/S3MANAGER/releases) oluşturur.
@@ -190,9 +205,9 @@ PyInstaller **onedir** ile hedef platformda yerel derleme gerekir (cross-compile
 
 | Platform | Komut | Çıktı |
 |----------|-------|-------|
-| Windows | `.\scripts\package-windows.ps1 -Version 0.0.7` | NSIS installer + portable zip |
-| macOS | `./scripts/package-macos.sh 0.0.7` | `.dmg` |
-| Linux | `./scripts/package-linux.sh 0.0.7` | `.tar.gz` + `.AppImage` |
+| Windows | `.\scripts\package-windows.ps1 -Version 0.0.8` | NSIS installer + portable zip |
+| macOS | `./scripts/package-macos.sh 0.0.8` | `.dmg` |
+| Linux | `./scripts/package-linux.sh 0.0.8` | `.tar.gz` + `.AppImage` |
 | Tümü (sadece build) | `.\scripts\build.ps1` / `./scripts/build.sh` | `dist/S3MANAGER/` |
 
 Windows paketleme için [NSIS](https://nsis.sourceforge.io/) kurulu olmalıdır (`makensis` PATH'te veya Chocolatey ile `choco install nsis`). CI ortamında NSIS Chocolatey üzerinden kurulur. İkon üretimi: `python scripts/generate_icons.py` (Pillow gerekir).
