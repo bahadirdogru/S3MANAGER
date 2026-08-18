@@ -14,6 +14,7 @@ legacy_entry.py  →  sys.path'e PySide6 shim ekler  →  src/main.py (PySide6 i
 | Bileşen | Açıklama |
 |---------|----------|
 | `PySide6/` | PySide2 üzerinde PySide6 API uyumluluk katmanı |
+| `pyinstaller_hooks/` | PyInstaller no-op `hook-PySide6*` (yalnızca PySide2 Qt toplansın) |
 | `legacy_entry.py` | `s3manager-macos-x86_64.spec` PyInstaller giriş noktası |
 | `requirements-macos-x86_64.txt` | PySide2 (PySide6 yok), proje kökünde |
 

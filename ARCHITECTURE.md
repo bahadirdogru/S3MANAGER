@@ -231,9 +231,9 @@ Statik site `docs/` → GitHub Pages → https://s3manager.bahadirdogru.com/ (`d
 | `build-macos-arm64` | `macos-latest` | `s3manager.spec` | PySide6 / Python 3.11 | 13 Ventura |
 | `build-macos-x86_64` | `macos-15-intel` | `s3manager-macos-x86_64.spec` | PySide2 + shim / Python 3.10 | 10.13 High Sierra |
 
-Intel x86_64 build yalnızca release pipeline'ında çalışır. `src/` PySide6 importları kullanır; `build/macos_x86_64/PySide6/` shim katmanı PySide2 üzerinde uyumluluk sağlar. Günlük geliştirme ve `ci.yml` değişmez.
+Intel x86_64 build yalnızca release pipeline'ında çalışır. `src/` PySide6 importları kullanır; `build/macos_x86_64/PySide6/` shim katmanı PySide2 üzerinde uyumluluk sağlar. `pyinstaller_hooks/` içindeki no-op hook'lar PyInstaller'ın hem PySide6 hem PySide2 Qt binding toplamasını engeller.
 
-PyInstaller `s3manager.spec`: yalnızca QtWidgets; `collect_all("PySide6")` kullanılmaz. Windows NSIS: Chocolatey + `makensis` PATH. Linux AppImage: `--appimage-extract-and-run` (CI'da FUSE gerekmez).
+PyInstaller `s3manager-macos-x86_64.spec`: yalnızca QtWidgets; `collect_all` kullanılmaz. Windows NSIS: Chocolatey + `makensis` PATH. Linux AppImage: `--appimage-extract-and-run` (CI'da FUSE gerekmez).
 
 ## Bağımlılıklar
 

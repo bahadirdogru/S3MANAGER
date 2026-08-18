@@ -7,16 +7,13 @@ from PyInstaller.utils.hooks import collect_submodules
 
 project_root = Path(SPECPATH)
 shim_root = project_root / "build" / "macos_x86_64"
+hooks_dir = shim_root / "pyinstaller_hooks"
 icon_ico = project_root / "assets" / "icon.ico"
 icon_icns = project_root / "assets" / "icon.icns"
 
 block_cipher = None
 
 hiddenimports = [
-    "PySide6",
-    "PySide6.QtCore",
-    "PySide6.QtGui",
-    "PySide6.QtWidgets",
     "PySide2.QtCore",
     "PySide2.QtGui",
     "PySide2.QtWidgets",
@@ -47,7 +44,7 @@ a = Analysis(
     binaries=[],
     datas=[],
     hiddenimports=hiddenimports,
-    hookspath=[],
+    hookspath=[str(hooks_dir)],
     hooksconfig={},
     runtime_hooks=[],
     excludes=_pyside2_excludes,
