@@ -28,6 +28,9 @@ env/
 ENV/
 .venv
 
+# python-build-standalone for Intel macOS 10.13+ release builds
+.python-legacy/
+
 # IDE
 .vscode/
 .idea/

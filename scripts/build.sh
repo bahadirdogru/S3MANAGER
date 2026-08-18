@@ -6,12 +6,25 @@ cd "$ROOT"
 
 SPEC="${SPEC:-s3manager.spec}"
 REQ_FILE="${REQ_FILE:-requirements.txt}"
+LEGACY_MACOS="${S3MANAGER_LEGACY_MACOS:-0}"
 
 echo "S3MANAGER derleniyor (onedir) — spec: ${SPEC}..."
 
+PYTHON_BIN="python3"
+if [[ "$LEGACY_MACOS" == "1" ]]; then
+  bash "$ROOT/scripts/setup-macos-legacy-python.sh"
+  PYTHON_BIN="$ROOT/.python-legacy/python/bin/python3.10"
+  if [[ ! -x "$PYTHON_BIN" ]]; then
+    echo "Legacy Python bulunamadi: $PYTHON_BIN" >&2
+    exit 1
+  fi
+  echo "Legacy Python: $PYTHON_BIN"
+  rm -rf venv
+fi
+
 if [[ ! -f venv/bin/activate ]]; then
   echo "venv bulunamadi. Olusturuluyor..."
-  python3 -m venv venv
+  "$PYTHON_BIN" -m venv venv
 fi
 
 # shellcheck disable=SC1091
@@ -29,6 +42,9 @@ if [[ -f "$OUT" ]]; then
 elif [[ -d "$ROOT/dist/S3MANAGER.app" ]]; then
   OUT_DIR="$ROOT/dist/S3MANAGER.app"
   echo "Basarili: $OUT_DIR"
+  if [[ "$LEGACY_MACOS" == "1" ]]; then
+    bash "$ROOT/scripts/verify-macos-legacy-binary.sh" "$OUT_DIR"
+  fi
 else
   echo "Cikti bulunamadi (dist/S3MANAGER/S3MANAGER veya .app)" >&2
   exit 1

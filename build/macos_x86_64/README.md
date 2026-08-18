@@ -29,19 +29,18 @@ legacy_entry.py  →  sys.path'e PySide6 shim ekler  →  src/main.py (PySide6 i
 ## Release build (CI)
 
 - Runner: `macos-15-intel`
-- Python: 3.10
+- Python: **python-build-standalone** 3.10.15 (`scripts/setup-macos-legacy-python.sh`) — macOS 10.13+ uyumlu; GitHub `setup-python` kullanılmaz
 - `MACOSX_DEPLOYMENT_TARGET=10.13`
 - Spec: `s3manager-macos-x86_64.spec`
 - Çıktı: `dist/S3MANAGER-{version}-macos-x86_64.dmg`
+- Build sonrası: `scripts/verify-macos-legacy-binary.sh` (LC_BUILD_VERSION kontrolü)
 
 ## Manuel test (Intel Mac veya CI runner)
 
 ```bash
 export MACOSX_DEPLOYMENT_TARGET=10.13
-python3.10 -m venv venv-legacy
-source venv-legacy/bin/activate
-pip install -r requirements-macos-x86_64.txt -r requirements-dev.txt
-SPEC=s3manager-macos-x86_64.spec bash scripts/build.sh
+export S3MANAGER_LEGACY_MACOS=1
+bash scripts/setup-macos-legacy-python.sh
 bash scripts/package-macos.sh 0.0.8
 ```
 

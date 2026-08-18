@@ -17,6 +17,14 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-18 — Intel macOS 10.13 uyumluluk düzeltmesi
+
+- **Sorun:** `setup-python` ile derlenen `libpython3.10.dylib` / `libintl.8.dylib` macOS 10.13'te `load command 0x80000034` hatası veriyordu
+- **Çözüm:** x86_64 release job'da **python-build-standalone** 3.10.15 (`scripts/setup-macos-legacy-python.sh`); build sonrası `verify-macos-legacy-binary.sh`
+- **Dosyalar:** `scripts/setup-macos-legacy-python.sh`, `scripts/verify-macos-legacy-binary.sh`, `scripts/build.sh`, `.github/workflows/release.yml`
+
+---
+
 ## 2026-08-18 — macOS çift DMG (arm64 + Intel x86_64)
 
 - **Ne:** Apple Silicon (`macos-arm64.dmg`, min macOS 13) ve Intel Mac (`macos-x86_64.dmg`, min macOS 10.13) için ayrı release hattı

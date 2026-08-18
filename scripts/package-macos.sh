@@ -17,6 +17,7 @@ case "$ARCH" in
     SPEC="s3manager-macos-x86_64.spec"
     REQ_FILE="requirements-macos-x86_64.txt"
     export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-10.13}"
+    export S3MANAGER_LEGACY_MACOS=1
     ;;
   *)
     echo "Desteklenmeyen mimari: $ARCH" >&2
