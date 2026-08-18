@@ -101,9 +101,6 @@ jobs:
             echo "VERSION=0.0.0-dev" >> "$GITHUB_ENV"
           fi
 
-      - name: Install dependencies
-        run: pip install -r requirements-macos-x86_64.txt -r requirements-dev.txt
-
       - name: Package macOS (x86_64)
         run: bash scripts/package-macos.sh "$VERSION"
 
