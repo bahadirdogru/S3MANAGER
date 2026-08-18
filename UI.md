@@ -17,6 +17,8 @@
 
 ### Genel Yaklaşım - WhatsApp Inspired (PySide6/Qt 6)
 
+> **Geliştirme:** Yalnızca PySide6/Qt6 kullanılır (`requirements.txt`). Intel x86_64 DMG release'te Qt5 (PySide2) ile paketlenir; QSS veya native görünümde küçük farklar olabilir — büyük tema değişikliklerinden sonra release Intel build kontrol edilmeli. PySide6'ya özgü yeni API shim kapsamı dışında kalırsa Intel release kırılabilir; ayrıntı: [build/macos_x86_64/README.md](build/macos_x86_64/README.md).
+
 - **Modern ve Minimal**: Temiz, sade, zarif tasarım
 - **WhatsApp Aesthetic**: Koyu veya açık arka plan, yeşil vurgular, yüksek kontrast metin
 - **Native Performance**: Qt 6 ile GPU hızlandırmalı rendering

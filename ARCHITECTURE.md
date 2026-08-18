@@ -222,13 +222,24 @@ Statik site `docs/` → GitHub Pages → https://s3manager.bahadirdogru.com/ (`d
 | Workflow | Tetikleyici | Çıktı |
 |----------|-------------|-------|
 | `ci.yml` | push/PR `main` | `test` (pytest, 93 test) → matrix build, artifact 7 gün |
-| `release.yml` | tag `v*.*.*` | Windows (NSIS+zip), macOS (dmg), Linux (tar.gz+AppImage) → GitHub Release (`release-notes/vX.Y.Z.md`) |
+| `release.yml` | tag `v*.*.*` | Windows (NSIS+zip), macOS arm64 + x86_64 (dmg), Linux (tar.gz+AppImage) → GitHub Release (`release-notes/vX.Y.Z.md`) |
+
+### macOS çift release hattı
+
+| Job | Runner | Spec | Qt | Min macOS |
+|-----|--------|------|-----|-----------|
+| `build-macos-arm64` | `macos-latest` | `s3manager.spec` | PySide6 / Python 3.11 | 13 Ventura |
+| `build-macos-x86_64` | `macos-15-intel` | `s3manager-macos-x86_64.spec` | PySide2 + shim / Python 3.10 | 10.13 High Sierra |
+
+Intel x86_64 build yalnızca release pipeline'ında çalışır. `src/` PySide6 importları kullanır; `build/macos_x86_64/PySide6/` shim katmanı PySide2 üzerinde uyumluluk sağlar. Günlük geliştirme ve `ci.yml` değişmez.
 
 PyInstaller `s3manager.spec`: yalnızca QtWidgets; `collect_all("PySide6")` kullanılmaz. Windows NSIS: Chocolatey + `makensis` PATH. Linux AppImage: `--appimage-extract-and-run` (CI'da FUSE gerekmez).
 
 ## Bağımlılıklar
 
-`boto3>=1.34.0`, `PySide6>=6.10.0`, `pyperclip>=1.8.2`
+Günlük geliştirme: `boto3>=1.34.0`, `PySide6>=6.10.0`, `pyperclip>=1.8.2` — `requirements.txt`
+
+Intel macOS release only: `requirements-macos-x86_64.txt` (`PySide2==5.15.2.1`, PySide6 yok)
 
 ## Değişiklik geçmişi
 

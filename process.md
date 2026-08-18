@@ -17,6 +17,16 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-18 — macOS çift DMG (arm64 + Intel x86_64)
+
+- **Ne:** Apple Silicon (`macos-arm64.dmg`, min macOS 13) ve Intel Mac (`macos-x86_64.dmg`, min macOS 10.13) için ayrı release hattı
+- **Nasıl:** `release.yml` → `build-macos-arm64` (PySide6) + `build-macos-x86_64` (`macos-15-intel`, PySide2 + `build/macos_x86_64/PySide6` shim)
+- **Geliştirme:** Günlük dev süreci değişmedi — `src/` PySide6, `ci.yml` aynı; PySide2 yalnızca Intel release build'de
+- **Binary'ler:** `macos-arm64.dmg` + `macos-x86_64.dmg` (Windows/Linux aynı)
+- **Dosyalar:** `build/macos_x86_64/`, `s3manager-macos-x86_64.spec`, `requirements-macos-x86_64.txt`, `scripts/package-macos.sh`, `.github/workflows/release.yml`
+
+---
+
 ## 2026-08-16 — Dökümantasyon senkronizasyonu
 
 - **Ne:** README, LLM, ARCHITECTURE, UI güncellendi — v0.0.8, tanıtım sitesi, Ayarlar/Bakım, nesne özellikleri, test.sh (93 test); CHANGELOG.md kaldırıldı (changelog yalnızca PROCESS.md)

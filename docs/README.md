@@ -27,3 +27,7 @@ python -m http.server 8080 --directory docs
 python scripts/capture_screenshots.py
 python scripts/generate_og_image.py
 ```
+
+## İndirme tablosu
+
+Kullanıcıya dönük platform/DMG tablosu `docs/index.html` içindedir (README Releases bölümü ile senkron tutulmalı). macOS için arm64 (13+) ve Intel x86_64 (10.13+) satırları ayrı gösterilir.

@@ -5,7 +5,26 @@ VERSION="${1:-0.1.0}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "S3MANAGER paketleniyor (macOS) v${VERSION}..."
+ARCH="$(uname -m)"
+case "$ARCH" in
+  arm64)
+    SUFFIX="macos-arm64"
+    SPEC="s3manager.spec"
+    REQ_FILE="requirements.txt"
+    ;;
+  x86_64)
+    SUFFIX="macos-x86_64"
+    SPEC="s3manager-macos-x86_64.spec"
+    REQ_FILE="requirements-macos-x86_64.txt"
+    export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-10.13}"
+    ;;
+  *)
+    echo "Desteklenmeyen mimari: $ARCH" >&2
+    exit 1
+    ;;
+esac
+
+echo "S3MANAGER paketleniyor (macOS ${ARCH}) v${VERSION}..."
 
 ensure_icns() {
   if [[ -f assets/icon.icns ]]; then
@@ -20,7 +39,7 @@ ensure_icns() {
   rm -rf "$ICONSET"
   mkdir -p "$ICONSET"
   for size in 16 32 128 256 512; do
-  d=$((size * 2))
+    d=$((size * 2))
     sips -z "$size" "$size" assets/icon.png --out "${ICONSET}/icon_${size}x${size}.png" >/dev/null
     sips -z "$d" "$d" assets/icon.png --out "${ICONSET}/icon_${size}x${size}@2x.png" >/dev/null
   done
@@ -29,7 +48,7 @@ ensure_icns() {
 }
 
 ensure_icns
-bash "$ROOT/scripts/build.sh"
+SPEC="$SPEC" REQ_FILE="$REQ_FILE" bash "$ROOT/scripts/build.sh"
 
 APP_PATH="$ROOT/dist/S3MANAGER.app"
 if [[ ! -d "$APP_PATH" ]]; then
@@ -43,7 +62,7 @@ mkdir -p "$STAGING"
 cp -R "$APP_PATH" "$STAGING/"
 ln -s /Applications "$STAGING/Applications"
 
-DMG_PATH="$ROOT/dist/S3MANAGER-${VERSION}-macos-arm64.dmg"
+DMG_PATH="$ROOT/dist/S3MANAGER-${VERSION}-${SUFFIX}.dmg"
 rm -f "$DMG_PATH"
 hdiutil create -volname "S3MANAGER" -srcfolder "$STAGING" -ov -format UDZO "$DMG_PATH"
 rm -rf "$STAGING"

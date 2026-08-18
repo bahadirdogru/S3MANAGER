@@ -58,6 +58,8 @@ S3MANAGER/
 │       ├── log_viewer.py        # read_log_tail (günlük sekmesi)
 │       └── object_metadata.py   # MIME tespiti, upload ExtraArgs
 ├── assets/                      # icon.png, icon.ico, icon.icns (macOS build)
+├── build/macos_x86_64/          # Intel macOS release only: PySide6 shim + legacy_entry.py
+├── requirements-macos-x86_64.txt  # PySide2 (release Intel DMG; dev'de gerekmez)
 ├── .github/workflows/
 │   ├── ci.yml                   # PR/main: test → matrix build
 │   └── release.yml              # tag → build + release-notes/vX.Y.Z.md body
@@ -73,7 +75,12 @@ S3MANAGER/
 │   └── installer/windows.nsi
 ├── start.sh                     # venv + pip + python src/main.py (Git Bash/WSL)
 ├── s3manager.spec               # PySide6 collect_all YOK; QtWidgets only
+├── s3manager-macos-x86_64.spec  # Intel macOS release: PySide2 + shim (min 10.13)
 ```
+
+**macOS kuralı:** UI kodu `PySide6` import kullanır. Intel legacy build shim ile release'te çözülür — `src/` değiştirilmez. Günlük dev/CI yalnızca PySide6.
+
+Release artifact'ları (6): Windows setup + portable, macOS arm64 dmg, macOS x86_64 dmg, Linux tar.gz + AppImage.
 
 ## Kritik dosyalar
 

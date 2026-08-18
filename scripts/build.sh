@@ -4,7 +4,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "S3MANAGER derleniyor (onedir)..."
+SPEC="${SPEC:-s3manager.spec}"
+REQ_FILE="${REQ_FILE:-requirements.txt}"
+
+echo "S3MANAGER derleniyor (onedir) — spec: ${SPEC}..."
 
 if [[ ! -f venv/bin/activate ]]; then
   echo "venv bulunamadi. Olusturuluyor..."
@@ -14,9 +17,9 @@ fi
 # shellcheck disable=SC1091
 source venv/bin/activate
 
-pip install -q -r requirements.txt -r requirements-dev.txt
+pip install -q -r "$REQ_FILE" -r requirements-dev.txt
 
-pyinstaller s3manager.spec --clean --noconfirm
+pyinstaller "$SPEC" --clean --noconfirm
 
 OUT_DIR="$ROOT/dist/S3MANAGER"
 OUT="$OUT_DIR/S3MANAGER"

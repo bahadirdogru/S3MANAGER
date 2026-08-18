@@ -180,11 +180,14 @@ Spaces access key ile **çalışmaz**; ayrı **DO API token** gerekir.
 
 En son sürüm: **[v0.0.8](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.8)** — [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases) sayfasından indirebilirsiniz. Değişiklik listesi: [PROCESS.md](PROCESS.md).
 
-| Platform | Dosya |
-|----------|-------|
-| Windows | `S3MANAGER-0.0.8-windows-setup.exe` (NSIS installer) veya `S3MANAGER-0.0.8-windows-portable.zip` |
-| macOS (Apple Silicon) | `S3MANAGER-0.0.8-macos-arm64.dmg` |
-| Linux x86_64 | `S3MANAGER-0.0.8-linux-x86_64.tar.gz` veya `S3MANAGER-0.0.8-linux-x86_64.AppImage` |
+| Platform | Dosya | Min. macOS |
+|----------|-------|------------|
+| Windows | `S3MANAGER-0.0.8-windows-setup.exe` (NSIS installer) veya `S3MANAGER-0.0.8-windows-portable.zip` | — |
+| macOS (Apple Silicon) | `S3MANAGER-0.0.8-macos-arm64.dmg` | 13 Ventura+ |
+| macOS (Intel) | `S3MANAGER-0.0.8-macos-x86_64.dmg` | 10.13 High Sierra+ |
+| Linux x86_64 | `S3MANAGER-0.0.8-linux-x86_64.tar.gz` veya `S3MANAGER-0.0.8-linux-x86_64.AppImage` | — |
+
+**macOS:** Apple Silicon (M serisi) Mac'ler `macos-arm64.dmg` indirmelidir. Intel işlemcili Mac'ler `macos-x86_64.dmg` kullanmalıdır.
 
 Uygulama açılışında GitHub Releases üzerinden otomatik güncelleme kontrolü yapılır. **Ayarlar → Yardım** sekmesinden manuel kontrol de mümkündür. Yeni sürüm bulunursa indirme sayfası tarayıcıda açılır.
 
@@ -199,7 +202,9 @@ git push origin main
 git push origin v0.0.8
 ```
 
-`v*.*.*` tag push edildiğinde GitHub Actions otomatik olarak Windows, macOS ve Linux'ta build alır ve [GitHub Release](https://github.com/bahadirdogru/S3MANAGER/releases) oluşturur.
+`v*.*.*` tag push edildiğinde GitHub Actions otomatik olarak Windows, macOS (arm64 + Intel x86_64) ve Linux'ta build alır ve [GitHub Release](https://github.com/bahadirdogru/S3MANAGER/releases) oluşturur (6 binary artifact).
+
+> **macOS geliştirme notu:** Günlük geliştirme ve CI yalnızca PySide6 kullanır. Intel Mac (10.13+) DMG, release sırasında `build/macos_x86_64/` altındaki PySide6→PySide2 shim ile ayrı üretilir. Yerel venv'e PySide2 kurmanız gerekmez. Ayrıntı: [build/macos_x86_64/README.md](build/macos_x86_64/README.md)
 
 ## Dağıtım (yerel derleme)
 
@@ -208,7 +213,8 @@ PyInstaller **onedir** ile hedef platformda yerel derleme gerekir (cross-compile
 | Platform | Komut | Çıktı |
 |----------|-------|-------|
 | Windows | `.\scripts\package-windows.ps1 -Version 0.0.8` | NSIS installer + portable zip |
-| macOS | `./scripts/package-macos.sh 0.0.8` | `.dmg` |
+| macOS (arm64) | `./scripts/package-macos.sh 0.0.8` | `*-macos-arm64.dmg` (PySide6) |
+| macOS (Intel x86_64) | `./scripts/package-macos.sh 0.0.8` (Intel Mac'te) | `*-macos-x86_64.dmg` (PySide2 + shim; bkz. [build/macos_x86_64/README.md](build/macos_x86_64/README.md)) |
 | Linux | `./scripts/package-linux.sh 0.0.8` | `.tar.gz` + `.AppImage` |
 | Tümü (sadece build) | `.\scripts\build.ps1` / `./scripts/build.sh` | `dist/S3MANAGER/` |
 
