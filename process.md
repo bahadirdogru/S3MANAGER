@@ -17,6 +17,15 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-08-19 — v0.0.9: Intel macOS PySide2/PySide6 çakışması düzeltmesi
+
+- **Sorun:** Intel `*-macos-x86_64.dmg` açılışta `RuntimeError: Cannot execute run-time hook for 'PySide6' because run-time hook for 'PySide2' has been run before`
+- **Kök neden:** `scripts/build.sh` legacy build'de `requirements-dev.txt` kuruyordu; bu dosya `-r requirements.txt` ile gerçek PySide6 wheel'ini venv'e ekliyordu
+- **Çözüm:** Legacy build yalnızca `requirements-macos-x86_64.txt` + `pyinstaller`; `scripts/verify-macos-x86_64-bundle.sh` ile bundle doğrulaması
+- **Dosyalar:** `scripts/build.sh`, `scripts/verify-macos-x86_64-bundle.sh`, `.github/workflows/release.yml`, `build/macos_x86_64/README.md`
+
+---
+
 ## 2026-08-18 — Intel macOS 10.13 uyumluluk düzeltmesi
 
 - **Sorun:** `setup-python` ile derlenen `libpython3.10.dylib` / `libintl.8.dylib` macOS 10.13'te `load command 0x80000034` hatası veriyordu

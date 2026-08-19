@@ -18,6 +18,16 @@ legacy_entry.py  →  sys.path'e PySide6 shim ekler  →  src/main.py (PySide6 i
 | `legacy_entry.py` | `s3manager-macos-x86_64.spec` PyInstaller giriş noktası |
 | `requirements-macos-x86_64.txt` | PySide2 (PySide6 yok), proje kökünde |
 
+## PySide6 kurulumu (önemli)
+
+Intel build (`scripts/build.sh` + `S3MANAGER_LEGACY_MACOS=1`) **`requirements-dev.txt` kurmaz** — o dosya `-r requirements.txt` ile PySide6 çeker. Venv'e gerçek PySide6 kurulursa PyInstaller hem PySide2 hem PySide6 runtime hook'unu paketler ve uygulama şu hatayla açılmaz:
+
+```
+RuntimeError: Cannot execute run-time hook for 'PySide6' because run-time hook for 'PySide2' has been run before
+```
+
+Legacy build yalnızca `requirements-macos-x86_64.txt` + `pyinstaller` kurar. Build sonrası `scripts/verify-macos-x86_64-bundle.sh` gerçek PySide6/Qt6 binary'lerinin bundle'a girmediğini doğrular.
+
 ## Yamalanan API farkları
 
 | Konu | PySide6 | PySide2 | Shim |
@@ -33,7 +43,7 @@ legacy_entry.py  →  sys.path'e PySide6 shim ekler  →  src/main.py (PySide6 i
 - `MACOSX_DEPLOYMENT_TARGET=10.13`
 - Spec: `s3manager-macos-x86_64.spec`
 - Çıktı: `dist/S3MANAGER-{version}-macos-x86_64.dmg`
-- Build sonrası: `scripts/verify-macos-legacy-binary.sh` (LC_BUILD_VERSION kontrolü)
+- Build sonrası: `scripts/verify-macos-legacy-binary.sh` (LC_BUILD_VERSION kontrolü), `scripts/verify-macos-x86_64-bundle.sh` (PySide2-only bundle)
 
 ## Manuel test (Intel Mac veya CI runner)
 

@@ -30,7 +30,13 @@ fi
 # shellcheck disable=SC1091
 source venv/bin/activate
 
-pip install -q -r "$REQ_FILE" -r requirements-dev.txt
+if [[ "$LEGACY_MACOS" == "1" ]]; then
+  # requirements-dev.txt pulls PySide6 via requirements.txt; Intel build must use PySide2 only.
+  pip install -q -r "$REQ_FILE"
+  pip install -q "pyinstaller>=6.0"
+else
+  pip install -q -r "$REQ_FILE" -r requirements-dev.txt
+fi
 
 pyinstaller "$SPEC" --clean --noconfirm
 
@@ -44,6 +50,7 @@ elif [[ -d "$ROOT/dist/S3MANAGER.app" ]]; then
   echo "Basarili: $OUT_DIR"
   if [[ "$LEGACY_MACOS" == "1" ]]; then
     bash "$ROOT/scripts/verify-macos-legacy-binary.sh" "$OUT_DIR"
+    bash "$ROOT/scripts/verify-macos-x86_64-bundle.sh" "$OUT_DIR"
   fi
 else
   echo "Cikti bulunamadi (dist/S3MANAGER/S3MANAGER veya .app)" >&2

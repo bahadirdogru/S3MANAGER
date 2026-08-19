@@ -104,6 +104,9 @@ jobs:
       - name: Package macOS (x86_64)
         run: bash scripts/package-macos.sh "$VERSION"
 
+      - name: Verify Intel macOS bundle
+        run: bash scripts/verify-macos-x86_64-bundle.sh dist/S3MANAGER.app
+
       - name: Upload macOS x86_64 assets
         uses: actions/upload-artifact@v4
         with:

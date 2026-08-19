@@ -13,7 +13,7 @@
 
 # S3MANAGER — LLM Rehberi
 
-DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. Sürüm: **0.0.8** (`src/version.py`). **pytest** — 93 test (`tests/`).
+DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. Sürüm: **0.0.9** (`src/version.py`). **pytest** — 93 test (`tests/`).
 
 ## Dizin yapısı
 
