@@ -28,7 +28,7 @@ env/
 ENV/
 .venv
 
-# python-build-standalone for Intel macOS 10.13+ release builds
+# python.org 3.10.11 + legacy libintl for Intel macOS 10.13+ release builds
 .python-legacy/
 
 # IDE

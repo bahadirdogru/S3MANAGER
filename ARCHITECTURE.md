@@ -229,9 +229,9 @@ Statik site `docs/` → GitHub Pages → https://s3manager.bahadirdogru.com/ (`d
 | Job | Runner | Spec | Qt | Min macOS |
 |-----|--------|------|-----|-----------|
 | `build-macos-arm64` | `macos-latest` | `s3manager.spec` | PySide6 / Python 3.11 | 13 Ventura |
-| `build-macos-x86_64` | `macos-15-intel` | `s3manager-macos-x86_64.spec` | PySide2 + shim / python-build-standalone 3.10 | 10.13 High Sierra |
+| `build-macos-x86_64` | `macos-15-intel` | `s3manager-macos-x86_64.spec` | PySide2 + shim / python.org 3.10.11 | 10.13 High Sierra |
 
-Intel x86_64 build yalnızca release pipeline'ında çalışır. `src/` PySide6 importları kullanır; `build/macos_x86_64/PySide6/` shim katmanı PySide2 üzerinde uyumluluk sağlar. `pyinstaller_hooks/` no-op hook'ları PyInstaller Qt çakışmasını engeller. Python için **python-build-standalone** kullanılır (macOS 10.13'te `libpython`/`libintl` yükleme hatası önlenir).
+Intel x86_64 build yalnızca release pipeline'ında çalışır. `src/` PySide6 importları kullanır; `build/macos_x86_64/PySide6/` shim katmanı PySide2 üzerinde uyumluluk sağlar. `pyinstaller_hooks/` no-op hook'ları PyInstaller Qt çakışmasını engeller. Python için **python.org 3.10.11** kullanılır; `libintl` gerekirse 10.13 hedefli derlenir (`LC_DYLD_CHAINED_FIXUPS` / Homebrew dylib sorunu önlenir).
 
 PyInstaller `s3manager-macos-x86_64.spec`: yalnızca QtWidgets; `collect_all` kullanılmaz. Windows NSIS: Chocolatey + `makensis` PATH. Linux AppImage: `--appimage-extract-and-run` (CI'da FUSE gerekmez).
 

@@ -207,7 +207,7 @@ git push origin v0.0.8
 
 When a `v*.*.*` tag is pushed, GitHub Actions automatically builds on Windows, macOS (arm64 + Intel x86_64), and Linux, and creates a [GitHub Release](https://github.com/bahadirdogru/S3MANAGER/releases) (6 binary artifacts).
 
-> **macOS development note:** Daily development and CI use PySide6 only. The Intel Mac (10.13+) DMG is produced separately at release time via the PySide6→PySide2 shim in `build/macos_x86_64/` and **python-build-standalone** Python. You do not need PySide2 in your local venv. Details: [build/macos_x86_64/README.md](build/macos_x86_64/README.md)
+> **macOS development note:** Daily development and CI use PySide6 only. The Intel Mac (10.13+) DMG is produced separately at release time via the PySide6→PySide2 shim in `build/macos_x86_64/` and **python.org 3.10.11**. You do not need PySide2 in your local venv. Details: [build/macos_x86_64/README.md](build/macos_x86_64/README.md)
 
 ## Distribution (local build)
 

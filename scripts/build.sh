@@ -19,6 +19,9 @@ if [[ "$LEGACY_MACOS" == "1" ]]; then
     exit 1
   fi
   echo "Legacy Python: $PYTHON_BIN"
+  # Homebrew dylib'lerinin (libintl vb.) PyInstaller tarafindan toplanmasini engelle.
+  export PATH="$ROOT/.python-legacy/python/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+  unset HOMEBREW_PREFIX HOMEBREW_CELLAR HOMEBREW_REPOSITORY DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH
   rm -rf venv
 fi
 
@@ -49,6 +52,7 @@ elif [[ -d "$ROOT/dist/S3MANAGER.app" ]]; then
   OUT_DIR="$ROOT/dist/S3MANAGER.app"
   echo "Basarili: $OUT_DIR"
   if [[ "$LEGACY_MACOS" == "1" ]]; then
+    bash "$ROOT/scripts/fix-macos-legacy-dylibs.sh" "$OUT_DIR"
     bash "$ROOT/scripts/verify-macos-legacy-binary.sh" "$OUT_DIR"
     bash "$ROOT/scripts/verify-macos-x86_64-bundle.sh" "$OUT_DIR"
   fi

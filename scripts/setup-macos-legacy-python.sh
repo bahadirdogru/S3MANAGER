@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Install python-build-standalone (x86_64) for macOS 10.13+ compatible PyInstaller builds.
+# Install python.org 3.10.11 (x86_64) for macOS 10.13+ PyInstaller builds.
+# python-build-standalone x86_64 targets 10.15+ and may pull incompatible dylibs.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 INSTALL_ROOT="$ROOT/.python-legacy"
 
-# Pinned release — targets macOS 10.13+ (see python-build-standalone docs).
-PBS_TAG="20241016"
-PBS_ARCHIVE="cpython-3.10.15+${PBS_TAG}-x86_64-apple-darwin-install_only.tar.gz"
-PBS_URL="https://github.com/astral-sh/python-build-standalone/releases/download/${PBS_TAG}/${PBS_ARCHIVE}"
+PYTHON_VERSION="3.10.11"
+PKG="python-${PYTHON_VERSION}-macos11.pkg"
+PKG_URL="https://www.python.org/ftp/python/${PYTHON_VERSION}/${PKG}"
 
 PYTHON_BIN="$INSTALL_ROOT/python/bin/python3.10"
 if [[ -x "$PYTHON_BIN" ]]; then
@@ -17,26 +17,51 @@ if [[ -x "$PYTHON_BIN" ]]; then
   exit 0
 fi
 
-echo "python-build-standalone indiriliyor (${PBS_ARCHIVE})..."
-rm -rf "$INSTALL_ROOT"
-mkdir -p "$INSTALL_ROOT"
-curl -fsSL "$PBS_URL" | tar -xz -C "$INSTALL_ROOT"
-
-if [[ ! -x "$PYTHON_BIN" ]]; then
-  # Fallback: locate python3.10 in extracted tree
-  PYTHON_BIN="$(find "$INSTALL_ROOT" -type f -name 'python3.10' | head -1)"
+if [[ "$(uname -m)" != "x86_64" ]]; then
+  echo "Legacy Python kurulumu yalnizca x86_64 icin: $(uname -m)" >&2
+  exit 1
 fi
 
+WORK="$(mktemp -d)"
+cleanup() { rm -rf "$WORK"; }
+trap cleanup EXIT
+
+echo "python.org ${PYTHON_VERSION} indiriliyor..."
+curl -fsSL "$PKG_URL" -o "$WORK/${PKG}"
+
+echo "PKG aciliyor..."
+mkdir -p "$WORK/xar" "$WORK/root"
+xar -xf "$WORK/${PKG}" -C "$WORK/xar"
+
+while IFS= read -r -d '' payload; do
+  echo "Payload: $payload"
+  (cd "$WORK/root" && cat "$payload" | gunzip -dc | cpio -i -d 2>/dev/null)
+done < <(find "$WORK/xar" -name Payload -print0)
+
+FRAMEWORK_SRC="$(find "$WORK/root" -type d -path '*/Python.framework/Versions/3.10' | head -1)"
+if [[ -z "$FRAMEWORK_SRC" ]]; then
+  echo "Python.framework bulunamadi (PKG icerigi):" >&2
+  find "$WORK/root" -maxdepth 6 -type d 2>/dev/null | head -40 >&2 || true
+  exit 1
+fi
+
+FRAMEWORK_ROOT="$(dirname "$(dirname "$FRAMEWORK_SRC")")"
+rm -rf "$INSTALL_ROOT"
+mkdir -p "$INSTALL_ROOT/python/bin" "$INSTALL_ROOT/Frameworks"
+cp -R "$FRAMEWORK_ROOT" "$INSTALL_ROOT/Frameworks/Python.framework"
+ln -sf "../Frameworks/Python.framework/Versions/3.10/bin/python3.10" "$INSTALL_ROOT/python/bin/python3.10"
+
+PYTHON_BIN="$INSTALL_ROOT/python/bin/python3.10"
 if [[ ! -x "$PYTHON_BIN" ]]; then
-  echo "python3.10 bulunamadi: $INSTALL_ROOT" >&2
+  echo "python3.10 calistirilamiyor: $PYTHON_BIN" >&2
   exit 1
 fi
 
 echo "Kuruldu: $PYTHON_BIN"
 "$PYTHON_BIN" --version
 
-LIBPYTHON="$(find "$INSTALL_ROOT" -name 'libpython3.10.dylib' | head -1)"
-if [[ -n "$LIBPYTHON" ]]; then
+LIBPYTHON="$INSTALL_ROOT/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib"
+if [[ -f "$LIBPYTHON" ]]; then
   echo "libpython: $LIBPYTHON"
-  otool -L "$LIBPYTHON" | head -10 || true
+  otool -L "$LIBPYTHON" | head -12 || true
 fi

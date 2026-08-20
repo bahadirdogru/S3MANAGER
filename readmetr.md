@@ -207,7 +207,7 @@ git push origin v0.0.8
 
 `v*.*.*` tag push edildiğinde GitHub Actions otomatik olarak Windows, macOS (arm64 + Intel x86_64) ve Linux'ta build alır ve [GitHub Release](https://github.com/bahadirdogru/S3MANAGER/releases) oluşturur (6 binary artifact).
 
-> **macOS geliştirme notu:** Günlük geliştirme ve CI yalnızca PySide6 kullanır. Intel Mac (10.13+) DMG, release sırasında `build/macos_x86_64/` altındaki PySide6→PySide2 shim ve **python-build-standalone** Python ile ayrı üretilir. Yerel venv'e PySide2 kurmanız gerekmez. Ayrıntı: [build/macos_x86_64/README.md](build/macos_x86_64/README.md)
+> **macOS geliştirme notu:** Günlük geliştirme ve CI yalnızca PySide6 kullanır. Intel Mac (10.13+) DMG, release sırasında `build/macos_x86_64/` altındaki PySide6→PySide2 shim ve **python.org 3.10.11** ile ayrı üretilir. Yerel venv'e PySide2 kurmanız gerekmez. Ayrıntı: [build/macos_x86_64/README.md](build/macos_x86_64/README.md)
 
 ## Dağıtım (yerel derleme)
 

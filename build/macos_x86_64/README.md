@@ -39,11 +39,16 @@ Legacy build yalnızca `requirements-macos-x86_64.txt` + `pyinstaller` kurar. Bu
 ## Release build (CI)
 
 - Runner: `macos-15-intel`
-- Python: **python-build-standalone** 3.10.15 (`scripts/setup-macos-legacy-python.sh`) — macOS 10.13+ uyumlu; GitHub `setup-python` kullanılmaz
+- Python: **python.org 3.10.11** (`scripts/setup-macos-legacy-python.sh`) — macOS 10.13+ uyumlu; GitHub `setup-python` kullanılmaz
+- `libintl.8.dylib`: Homebrew yerine `scripts/build-macos-legacy-libintl.sh` ile 10.13 hedefli derleme (`fix-macos-legacy-dylibs.sh`)
 - `MACOSX_DEPLOYMENT_TARGET=10.13`
 - Spec: `s3manager-macos-x86_64.spec`
 - Çıktı: `dist/S3MANAGER-{version}-macos-x86_64.dmg`
+<<<<<<< Updated upstream
 - Build sonrası: `scripts/verify-macos-legacy-binary.sh` (LC_BUILD_VERSION kontrolü), `scripts/verify-macos-x86_64-bundle.sh` (PySide2-only bundle)
+=======
+- Build sonrası: `fix-macos-legacy-dylibs.sh` + `verify-macos-legacy-binary.sh` (LC_DYLD_CHAINED_FIXUPS / minos kontrolü)
+>>>>>>> Stashed changes
 
 ## Manuel test (Intel Mac veya CI runner)
 

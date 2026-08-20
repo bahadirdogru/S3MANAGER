@@ -70,7 +70,9 @@ S3MANAGER/
 │   ├── generate_og_image.py     # docs/assets/og-image.png
 │   ├── package-windows.ps1      # NSIS installer (makensis otomatik bulunur)
 │   ├── package-macos.sh         # DMG (arm64 PySide6 / x86_64 legacy)
-│   ├── setup-macos-legacy-python.sh  # python-build-standalone 3.10 (Intel release)
+│   ├── setup-macos-legacy-python.sh  # python.org 3.10.11 (Intel release)
+│   ├── build-macos-legacy-libintl.sh # 10.13 hedefli libintl derlemesi
+│   ├── fix-macos-legacy-dylibs.sh    # LC_DYLD_CHAINED_FIXUPS duzeltmesi
 │   ├── verify-macos-legacy-binary.sh # macOS 10.13 dylib uyumluluk kontrolü
 │   ├── package-linux.sh         # tar.gz + AppImage (--appimage-extract-and-run CI)
 │   ├── generate_icons.py
@@ -80,7 +82,7 @@ S3MANAGER/
 ├── s3manager-macos-x86_64.spec  # Intel macOS release: PySide2 + shim (min 10.13)
 ```
 
-**macOS kuralı:** UI kodu `PySide6` import kullanır. Intel legacy build shim + **python-build-standalone** 3.10 ile release'te çözülür — `src/` değiştirilmez. Günlük dev/CI yalnızca PySide6 (`setup-python` Intel release'te kullanılmaz).
+**macOS kuralı:** UI kodu `PySide6` import kullanır. Intel legacy build shim + **python.org 3.10.11** ile release'te çözülür — `src/` değiştirilmez. Günlük dev/CI yalnızca PySide6 (`setup-python` Intel release'te kullanılmaz).
 
 Release artifact'ları (6): Windows setup + portable, macOS arm64 dmg, macOS x86_64 dmg, Linux tar.gz + AppImage.
 
