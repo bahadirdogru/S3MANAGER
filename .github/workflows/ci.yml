@@ -38,13 +38,14 @@ jobs:
           docker run -d --name minio -p 9000:9000 \
             -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
             cgr.dev/chainguard/minio:latest server /data
+          # AWS CLI v2 is preinstalled on GitHub runners (curl 7.81's --aws-sigv4 is broken).
+          export AWS_ACCESS_KEY_ID=minioadmin AWS_SECRET_ACCESS_KEY=minioadmin AWS_DEFAULT_REGION=us-east-1
           for i in $(seq 1 60); do
-            code=$(curl -s -o /tmp/mb.txt -w '%{http_code}' --aws-sigv4 "aws:amz:us-east-1:s3" \
-              --user minioadmin:minioadmin -X PUT http://localhost:9000/s3m-test || true)
-            if [ "$code" = "200" ] || [ "$code" = "409" ]; then echo "bucket ready ($code)"; exit 0; fi
+            if aws --endpoint-url http://localhost:9000 s3api create-bucket --bucket s3m-test 2>/tmp/mb.txt \
+              || grep -q BucketAlreadyOwnedByYou /tmp/mb.txt; then echo "bucket ready"; exit 0; fi
             sleep 1
           done
-          echo "MinIO bucket creation failed (last HTTP $code)"; cat /tmp/mb.txt; docker logs minio; exit 1
+          echo "MinIO bucket creation failed"; cat /tmp/mb.txt; docker logs minio; exit 1
       - name: Rust tests (unit + live MinIO)
         env:
           S3M_IT_ENDPOINT: http://localhost:9000
