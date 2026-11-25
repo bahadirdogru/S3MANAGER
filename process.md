@@ -4,16 +4,34 @@
 > |-------|----------------|
 > | [README.md](README.md) | Kurulum, kullanım, proje tanıtımı (GitHub/GitLab anasayfa) |
 > | [docs/](docs/) | Tanıtım web sitesi ([s3manager.bahadirdogru.com](https://s3manager.bahadirdogru.com/)) |
-> | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
-> | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
+> | [UI.md](UI.md) | Renk, tema token'ları, shadcn-svelte bileşen ve UX kuralları |
+> | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, eşzamanlılık (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |
-> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (changelog) |
+> | [process.md](process.md) | Kronolojik değişiklik kayıtları (changelog) |
 >
 > **Bu dosya:** Kronolojik changelog — ne yapıldı, nasıl yapıldı, neden.
 
 # S3MANAGER — Changelog
 
 Ters kronolojik sıra. Gelecek işler burada tutulmaz.
+
+---
+
+## 2026-11-25 — v0.1.0: Tauri 2 + Rust + SvelteKit yeniden yazımı
+
+- **Ne:** PySide6/boto3 uygulaması kaldırıldı; aynı işlevler Tauri 2 ile yeniden yazıldı. Backend Rust (`aws-sdk-s3`, `tokio`), frontend SvelteKit 3 + Svelte 5 + TypeScript + shadcn-svelte (vega) + Tailwind 4.
+- **Korunan:** `~/.s3manager/config.ini` dosya/bölüm uyumu, sayfalı listeleme + 60 s cache, lazy ACL, önek araması, kopyala/taşı/yeniden adlandır (`(kopya n)`), toplu silme, 3/7 gün presigned link (panoya), nesne özellikleri (Content-Type, Cache-Control, `x-amz-meta-*`, ACL), metadata kuralları, yarım multipart bakımı, günlük sekmesi, GitHub güncelleme kontrolü ("bu sürümü atla"), koyu/açık WhatsApp paleti, kısayollar, sürükle-bırak.
+- **Yeni / değişen:**
+  - Herhangi bir S3 uyumlu endpoint (özel endpoint + bölge + path-style); `[digitalocean] path_style` alanı
+  - Multipart eşiği 100 MB → 16 MB (parça bazlı ilerleme); iptal multipart'ı sunucuda abort eder
+  - Kopyala/taşı/metadata güncelleme kaynak ACL'ini korur (eskiden private'a dönüyordu)
+  - İndirme `.part` + rename; anahtarlar hedef klasör dışına yazamaz (path traversal koruması)
+  - public-read nesnelerde açık URL; checksum `WhenRequired` (S3 uyumlu servis uyumu)
+  - Uygulama kök dizinde: `src/` (SvelteKit), `src-tauri/` (Rust)
+- **Kaldırılan:** `src/` (Python), `tests/` (pytest), `build/macos_x86_64/` (PySide2 shim), `scripts/` (PyInstaller/NSIS/DMG/AppImage betikleri, ekran görüntüsü ve OG betikleri), `requirements*.txt`, `pyproject.toml`, `*.spec`, `start.sh`. Paketleme artık `tauri build` / `tauri-action`.
+- **Platform notu:** minimum macOS 10.15 (eski Intel DMG 10.13'ü destekliyordu). `~/.pydamlaspace` taşıma desteği kaldırıldı.
+- **Test:** Rust birim testleri + `s3::live` / `transfers::live` canlı testleri (listeleme, sayfalama, kopyala/yeniden adlandır/sil, metadata, presign, 40 MB multipart yükleme, klasör indirme + bayt karşılaştırma, iptalde yarım parça kalmaması). CI bunları MinIO'ya karşı çalıştırır. MinIO ACL'i yok sayar (`S3M_IT_ACL=1` Spaces/AWS içindir) ve `max-keys=1` + klasör işaretçisinde `IsTruncated` yanlış döndürür.
+- **Dosyalar:** `src-tauri/**`, `src/**`, `package.json`, `vite.config.ts`, `components.json`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`, tüm üst düzey md dosyaları
 
 ---
 

@@ -4,243 +4,120 @@
 > |-------|----------------|
 > | [README.md](README.md) | Kurulum, kullanım, proje tanıtımı (GitHub/GitLab anasayfa) |
 > | [docs/](docs/) | Tanıtım web sitesi ([s3manager.bahadirdogru.com](https://s3manager.bahadirdogru.com/)) |
-> | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
-> | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
+> | [UI.md](UI.md) | Renk, tema token'ları, shadcn-svelte bileşen ve UX kuralları |
+> | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, eşzamanlılık (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |
-> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (changelog) |
+> | [process.md](process.md) | Kronolojik değişiklik kayıtları (changelog) |
 >
-> **Bu dosya:** Mimari dokümantasyon — katmanlar, veri akışı, threading ve güvenlik.
+> **Bu dosya:** Mimari katmanlar, veri akışı ve eşzamanlılık modeli.
 
-# Mimari Dokümantasyon
+# S3MANAGER — Mimari
 
-## Genel Bakış
+## Genel bakış
 
-S3MANAGER, DigitalOcean Spaces ile etkileşim için PySide6 tabanlı bir masaüstü uygulamasıdır. UI, servis ve config katmanları ayrılmıştır; ağ işlemleri worker thread'lerde çalışır.
-
-## Mimari Katmanlar
+S3MANAGER bir **Tauri 2** uygulamasıdır. Tek bir native süreç içinde iki katman çalışır:
 
 ```
-┌─────────────────────────────────────┐
-│         UI Layer (PySide6)          │
-│  MainWindow, FileModel, Dialogs     │
-│  QTreeView, Breadcrumb, Workers     │
-└──────────────┬──────────────────────┘
-               │
-┌──────────────▼──────────────────────┐
-│      Service Layer                    │
-│  SpacesClient, UploadService          │
-│  ShareService, ListingCache           │
-└──────────────┬──────────────────────┘
-               │
-┌──────────────▼──────────────────────┐
-│      Config + Utils                   │
-│  Settings, CredentialsManager         │
-│  helpers, validators, logging         │
-└──────────────┬──────────────────────┘
-               │
-┌──────────────▼──────────────────────┐
-│      DigitalOcean Spaces (boto3)      │
-└─────────────────────────────────────┘
+┌──────────────────────────── WebView (WebKitGTK / WKWebView / WebView2) ────────────────────────────┐
+│  SvelteKit SPA (TypeScript, Svelte 5 runes, shadcn-svelte)                                         │
+│                                                                                                    │
+│  components/app/*.svelte ──▶ actions.ts ──▶ api.ts ── invoke() ──┐      listen('transfer') ◀──┐    │
+│        ▲                          │                             │                            │    │
+│        └──── stores/*.svelte.ts ◀─┘  (explorer, transfers, session, dialogs, ui)             │    │
+└─────────────────────────────────────────────────────────────────│────────────────────────────│────┘
+                                                IPC (JSON)        ▼                            │
+┌──────────────────────────────────────── Rust (tokio) ──────────────────────────────────────────────┐
+│  commands.rs  (#[tauri::command], AppState)                                                        │
+│      │                 │                         │                                                 │
+│      ▼                 ▼                         ▼                                                 │
+│  s3.rs (Spaces)    transfers.rs (TransferManager) ── emit("transfer", TransferEvent) ──────────────┘
+│      │                 │                                                                           │
+│      └──── aws-sdk-s3 ─┴──▶ S3 uyumlu endpoint (Spaces, AWS, MinIO, R2…)                           │
+│  config.rs ──▶ ~/.s3manager/config.ini      metadata.rs (Content-Type kuralları)                    │
+│  tauri-plugin-log ──▶ ~/.s3manager/app.log                                                         │
+└────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## UI Katmanı
+- **Frontend hiçbir zaman S3'e doğrudan bağlanmaz.** Kimlik bilgileri, imzalama ve ağ IO'su yalnızca Rust tarafındadır. CSP `connect-src` yalnızca IPC'ye izin verir.
+- Komutlar tek API yüzeyidir: `src-tauri/src/commands.rs` ↔ `src/lib/api.ts`. İkisi birlikte güncellenir.
 
-### MainWindow (`src/ui/qt/main_window.py`)
+## Rust katmanı (`src-tauri/src/`)
 
-Ana pencere; iki satır toolbar, breadcrumb, arama, split-view (liste + önizleme), transfer paneli ve tüm worker'ları koordine eder.
+| Modül | Sorumluluk |
+|-------|-----------|
+| `lib.rs` | Plugin kayıtları (log, dialog, clipboard, opener), `invoke_handler`, pencere kapanınca transferleri iptal |
+| `commands.rs` | `AppState { settings, spaces: RwLock<Option<Arc<Spaces>>>, transfers }`; tüm komutlar `AppResult<T>` döner |
+| `s3.rs` | `Spaces` istemcisi: sayfalı listeleme, `list_all`, ACL okuma/yazma, head/metadata, kopyala/taşı/yeniden adlandır, toplu silme, presign, multipart listele/iptal |
+| `transfers.rs` | Yükleme/indirme kuyruğu, ilerleme olayları, iptal |
+| `config.rs` | `config.ini` okuma/yazma (`[digitalocean]`, `[upload_metadata]`, `[appearance]`, `[updates]`) |
+| `metadata.rs` | Uzantı → Content-Type / Content-Disposition / Cache-Control |
+| `error.rs` | `AppError` → frontend'e düz Türkçe metin olarak serialize edilir; S3 hata kodu (`AccessDenied` vb.) mesaja eklenir |
 
-Navigasyon (`navigate_to`, breadcrumb, geri) sırasında önceki `SpacesWorker` durdurulur ve sinyalleri koparılır (`_stop_list_worker`, `_detach_list_worker`). Cache hit'te stale callback'lerin modeli bozmaması için `on_page_loaded` / `on_list_finished` içinde `sender() is _list_worker` kontrolü yapılır.
+### S3 istemcisi
 
-**Worker sınıfları (aynı dosyada):**
+- `aws-sdk-s3` özel endpoint, bölge ve isteğe bağlı path-style ile kurulur.
+- `request_checksum_calculation` / `response_checksum_validation` = **WhenRequired**. Yeni SDK varsayılanı olan CRC checksum'ları birçok S3 uyumlu servis reddeder.
+- Zaman aşımları: bağlantı 60 s, okuma 300 s; standart retry, 3 deneme.
+- Kopyalama `CopyObject` ile yapılır; kaynak anahtar `x-amz-copy-source` için percent-encode edilir. S3 kopyası ACL'i sıfırladığından **kopyala, taşı ve metadata güncellemede kaynak ACL'i okunup aynısı uygulanır**.
+- Taşıma = kopyala + sil. Klasör işlemleri önekteki tüm anahtarları (`list_all`) dolaşır.
+- Silme 1000'lik `DeleteObjects` partileriyle yapılır; servis bu çağrıyı reddederse tek tek `DeleteObject`'e düşer.
 
-| Worker | Görev |
-|--------|-------|
-| `SpacesWorker` | Sayfalı dosya listeleme |
-| `AttributeWorker` | Görünür satırlar için ACL lazy load |
-| `ActionWorker` | Silme, klasör oluşturma |
-| `DownloadWorker` | Dosya/klasör indirme |
-| `ParallelUploadWorker` | Paralel yükleme (max 3 thread) |
-
-### FileModel (`src/ui/qt/models.py`)
-
-`QAbstractItemModel` tabanlı liste modeli. Sanal scrolling ile binlerce satır desteklenir. Sayfalı yükleme için `append_items()` kullanılır; `canFetchMore` / `fetchMore` scroll ile sonraki sayfayı tetikler.
-
-### PreviewPanel (`src/ui/qt/preview_panel.py`)
-
-Split-view sağ panel. Tek dosya seçildiğinde metadata + görsel/metin önizleme. **Özellikler** → `ObjectPropertiesDialog`.
-
-### SettingsDialog (`src/ui/qt/settings_dialog.py`)
-
-Toolbar **Ayarlar** — 6 sekme: Bağlantı, Yükleme Metadata, Görünüm, Günlük, **Bakım** (`IncompleteUploadsPanel`), Yardım. Görünüm sekmesi toolbar `ThemeSwitch` ile senkron.
-
-### ObjectPropertiesDialog (`src/ui/qt/object_properties_dialog.py`)
-
-Mevcut nesnede Content-Type, Cache-Control, `x-amz-meta-*`, ACL düzenleme → `SpacesClient.update_object_metadata`, `put_object_acl`.
-
-### Dialogs (`src/ui/qt/dialogs.py`)
-
-- **LoginDialog** — Kimlik bilgisi, validators, `test_connection()`
-- **UploadDialog** — Üç fazlı: seçim (drop zone + dosya listesi), yükleme (genel progress), özet
-- **ShareDialog** — 3/7 gün paylaşım süresi seçimi
-
-### Styles (`src/ui/qt/styles.py`)
-
-WhatsApp-inspired dark/light QSS — `ThemePalette`, `apply_app_theme()`, `apply_item_view_palette()` (Windows tablo viewport). Detaylar [UI.md](UI.md).
-
-## Servis Katmanı
-
-### SpacesClient (`src/services/spaces_client.py`)
-
-Boto3 S3 client wrapper (DigitalOcean Spaces endpoint).
-
-- `list_objects_page()` — Tek API sayfası (lazy loading)
-- `list_objects()` — Tam liste (indirme/silme için)
-- `upload_file`, `download_file`, `delete_object`, `delete_objects_batch`, `delete_folder_recursive`
-- `get_object_acl`, `head_object` — Lazy attribute / önizleme
-- `put_object_acl`, `update_object_metadata` — Nesne özellikleri dialogu
-- `list_incomplete_multipart_uploads`, `abort_multipart_upload` — Bakım sekmesi
-- `create_presigned_url`, `create_folder`, `test_connection`
-
-### UploadService (`src/services/upload_service.py`)
-
-Multipart upload (100MB eşik), thread-safe progress. **Deadlock önleme:** `progress.lock` içinde `get_progress()` çağrılmaz.
-
-### ShareService (`src/services/share_service.py`)
-
-Presigned URL (3/7 gün) ve panoya kopyalama.
-
-### ListingCache (`src/services/listing_cache.py`)
-
-Prefix bazlı klasör listesi cache (TTL 60 saniye). Upload/silme/yenile sonrası invalidate.
-
-## Config Katmanı
-
-- **Settings** — `~/.s3manager/config.ini` okuma/yazma
-- **CredentialsManager** — Oturum içi credential cache
-
-## Veri Akışı
-
-### Bağlantı
+### Transferler
 
 ```
-LoginDialog → validators → SpacesClient.test_connection()
-         → Settings.save_credentials() → MainWindow.on_connected()
+start_uploads / start_downloads
+   └─ her dosya: uuid + CancellationToken → tokio görevi
+        ├─ Semaphore (yükleme 3, indirme 3) — sırada: status=queued
+        ├─ status=running
+        ├─ yükleme ≤ 16 MB: tek PutObject (ByteStream::from_path)
+        │  yükleme > 16 MB: CreateMultipartUpload → parçalar (≥ 8 MB, ≤ 10 000 parça, 4 eşzamanlı)
+        │                   → CompleteMultipartUpload; hata/iptalde AbortMultipartUpload
+        ├─ indirme: GetObject akışı → <ad>.part → rename; hata/iptalde .part silinir
+        └─ status=done | error | cancelled
 ```
 
-### Sayfalı listeleme (lazy loading)
+- İlerleme `Reporter` üzerinden `Sink` callback'ine gider; uygulamada bu `app.emit("transfer", …)`, testlerde bir koleksiyondur. Olaylar en fazla 150 ms'de bir yayınlanır.
+- İptal `tokio::select!` ile her ağ adımında kontrol edilir. Multipart iptal edildiğinde parçalar sunucuda bırakılmaz.
+- Klasör indirmede anahtar sonekleri güvenli göreli yola çevrilir (`..`, `.`, kök bileşenleri atılır) — kötü niyetli bir anahtar hedef klasörün dışına yazamaz.
+- Yerel klasör yüklemede symlink'ler atlanır (döngü ve sürpriz yok).
 
-```
-refresh_list → _stop_list_worker (önceki worker sinyalleri kopar)
-            → ListingCache.get (hit → model.set_items, return)
-            → SpacesWorker (miss)
-                  → list_objects_page() [sayfa 1..N]
-                  → page_loaded → FileModel.append_items()  [stale guard]
-                  → finished → ListingCache.put(worker prefix)  [stale guard]
-            → AttributeWorker → get_object_acl (görünür satırlar)
-```
+## Frontend katmanı (`src/`)
 
-### Yükleme
+SvelteKit `adapter-static` ile SPA olarak derlenir (`ssr = false`), Tauri bunu `build/` klasöründen sunar.
 
-```
-UploadDialog.upload_started → ParallelUploadWorker (ThreadPoolExecutor, max 3)
-                           → UploadService.upload_file() × N
-                           → object_metadata.build_upload_extra_args() (Content-Type, Content-Disposition, Cache-Control)
-                           → SpacesClient.upload_file(ExtraArgs=...)
-                           → progress signals → UploadDialog
-```
+| Dosya | Sorumluluk |
+|-------|-----------|
+| `lib/api.ts` | Tipli `invoke()` sarmalayıcıları, `onTransfer()` |
+| `lib/actions.ts` | Araç çubuğu, sağ tık menüsü ve kısayolların paylaştığı işlemler (yükle, indir, sil, yeniden adlandır, kopyala/taşı, paylaş) |
+| `lib/stores/explorer.svelte.ts` | Mevcut önek, sayfalama, sıralama, seçim, 60 s önek cache'i, lazy ACL kuyruğu |
+| `lib/stores/transfers.svelte.ts` | `transfer` olaylarından beslenen canlı liste; biten yüklemeden sonra klasörü yeniler |
+| `lib/stores/session.svelte.ts` | Bağlanma, otomatik bağlanma, 60 s'de bir bağlantı ping'i, tema, açılış güncelleme kontrolü |
+| `lib/stores/dialogs.svelte.ts` | Promise tabanlı `prompt()` / `confirm()` |
+| `lib/stores/ui.svelte.ts` | Açık diyaloglar ve yükleri, çalışan toplu işlem kilidi (`busy`) |
+| `lib/components/app/` | Ekranlar ve diyaloglar |
+| `lib/components/ui/` | shadcn-svelte tarafından üretilir — elle düzenlenmez |
 
-Yükleme metadata ayarları `~/.s3manager/config.ini` `[upload_metadata]` bölümünde; **Ayarlar → Yükleme Metadata...** veya Upload dialog'undaki **Ayarlar...** ile düzenlenir.
+### Veri akışı: klasör açma
 
-### İndirme
+1. `explorer.open(prefix)` → nesil sayacı artar, cache'e bakılır (60 s TTL, anahtar: önek + arama).
+2. Cache yoksa `list_page(prefix, null, search, 200)`; sonuç geldiğinde nesil değiştiyse (kullanıcı başka klasöre geçtiyse) atılır.
+3. Tablo satırları ortak bir `IntersectionObserver` ile izlenir: görünen dosya satırları ACL kuyruğuna girer (120 ms toplanır, `get_acls` 8 eşzamanlı), alttaki gözcü satırı görününce `loadMore()` çağrılır.
 
-```
-DownloadWorker → list_all_keys (klasör) → download_file (her dosya)
-```
+### Veri akışı: yükleme
 
-### Paylaşım
+1. Dosya seçici veya sürükle-bırak → `expand_upload(paths, prefix)` (Rust klasörleri dolaşır, anahtarları üretir).
+2. `UploadDialog` listeyi ve üzerine yazılacakları gösterir → `start_upload(requests, acl)` → ilk `queued` olayları döner.
+3. `transfer` olayları `transfers.map`'i günceller; `done` olan yükleme mevcut klasördeyse liste 600 ms debounce ile yenilenir.
 
-```
-ShareDialog → ShareService.share_to_clipboard() → presigned URL → pyperclip
-```
+## Yapılandırma ve günlük
 
-### Nesne özellikleri
+- `~/.s3manager/config.ini` — Python sürümüyle aynı dosya ve bölümler; yeni alan: `[digitalocean] path_style`.
+- `~/.s3manager/app.log` — `tauri-plugin-log`, 2 MB'da döner; AWS SDK / hyper / rustls gürültüsü `warn` seviyesine indirilir.
 
-```
-Context menu / PreviewPanel → ObjectPropertiesDialog
-                         → update_object_metadata (copy+replace)
-                         → put_object_acl
-```
+## Testler
 
-### Toplu silme
-
-```
-Çoklu seçim → delete_objects_batch (batch API, ActionWorker yerine doğrudan batch)
-```
-
-### Tanıtım sitesi
-
-Statik site `docs/` → GitHub Pages → https://s3manager.bahadirdogru.com/ (`docs/CNAME`). Renkler `docs/css/style.css` ile UI paleti senkron.
-
-## Threading
-
-- **Ana thread:** Tüm Qt widget işlemleri
-- **Worker thread'ler:** boto3 ağ çağrıları
-- **İptal:** `requestInterruption()` + `isInterruptionRequested()`; `terminate()` kullanılmaz
-- **UI güncelleme:** Qt Signal/Slot (thread-safe)
-
-## Güvenlik
-
-1. Credentials `~/.s3manager/config.ini` (düz metin, home dizini)
-2. Şifre alanları maskelenir (`QLineEdit.Password`)
-3. ACL: yüklemede kullanıcı seçimi (private/public-read)
-4. Presigned URL: sadece GET, 3/7 gün
-
-## Performans
-
-1. **Qt Model/View** — Sanal scrolling
-2. **Sayfalı listeleme** — İlk sayfa hızlı görünür; scroll ile devam
-3. **ListingCache** — Geri navigasyonda anında liste
-4. **ACL lazy load** — Listelemede N+1 API çağrısı yok
-5. **Multipart upload** — 100MB üzeri, max 3 paralel upload thread
-
-## Hata Yönetimi
-
-- Servislerde try/except; UI'da `QMessageBox`
-- Worker'larda `error` signal
-- Tüm hatalar `app.log` (RotatingFileHandler, 10MB, 5 yedek)
-
-## Test stratejisi
-
-- **pytest** — unit testler (`tests/unit/`) ve servis testleri (`tests/services/`)
-- **moto** — boto3 S3 çağrıları mock'lanır; gerçek DigitalOcean bağlantısı gerekmez
-- **Coverage** — `pyproject.toml` ile %60 eşik; Qt UI katmanı (`src/ui/*`) ve ağır upload servisi omit
-- **CI** — `test` job (ubuntu) geçmeden PyInstaller build matrix başlamaz
-- GUI testleri bilinçli olarak kapsam dışı
-
-## CI / Release
-
-| Workflow | Tetikleyici | Çıktı |
-|----------|-------------|-------|
-| `ci.yml` | push/PR `main` | `test` (pytest, 93 test) → matrix build, artifact 7 gün |
-| `release.yml` | tag `v*.*.*` | Windows (NSIS+zip), macOS arm64 + x86_64 (dmg), Linux (tar.gz+AppImage) → GitHub Release (`release-notes/vX.Y.Z.md`) |
-
-### macOS çift release hattı
-
-| Job | Runner | Spec | Qt | Min macOS |
-|-----|--------|------|-----|-----------|
-| `build-macos-arm64` | `macos-latest` | `s3manager.spec` | PySide6 / Python 3.11 | 13 Ventura |
-| `build-macos-x86_64` | `macos-15-intel` | `s3manager-macos-x86_64.spec` | PySide2 + shim / python.org 3.10.11 | 10.13 High Sierra |
-
-Intel x86_64 build yalnızca release pipeline'ında çalışır. `src/` PySide6 importları kullanır; `build/macos_x86_64/PySide6/` shim katmanı PySide2 üzerinde uyumluluk sağlar. `pyinstaller_hooks/` no-op hook'ları PyInstaller Qt çakışmasını engeller. Python için **python.org 3.10.11** kullanılır; `libintl` gerekirse 10.13 hedefli derlenir (`LC_DYLD_CHAINED_FIXUPS` / Homebrew dylib sorunu önlenir).
-
-PyInstaller `s3manager-macos-x86_64.spec`: yalnızca QtWidgets; `collect_all` kullanılmaz. Windows NSIS: Chocolatey + `makensis` PATH. Linux AppImage: `--appimage-extract-and-run` (CI'da FUSE gerekmez).
-
-## Bağımlılıklar
-
-Günlük geliştirme: `boto3>=1.34.0`, `PySide6>=6.10.0`, `pyperclip>=1.8.2` — `requirements.txt`
-
-Intel macOS release only: `requirements-macos-x86_64.txt` (`PySide2==5.15.2.1`, PySide6 yok)
-
-## Değişiklik geçmişi
-
-[PROCESS.md](PROCESS.md)
+| Katman | Araç | Konum |
+|--------|------|-------|
+| Rust birim | `cargo test` | `#[cfg(test)] mod tests` (metadata, önek, encode, parça boyutu, path traversal, klasör genişletme) |
+| Rust canlı S3 | `cargo test -- --ignored` + `S3M_IT_*` | `s3::live`, `transfers::live` — CI'da MinIO'ya karşı |
+| Frontend tip | `svelte-check` | `pnpm check` |

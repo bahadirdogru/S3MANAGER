@@ -4,609 +4,135 @@
 > |-------|----------------|
 > | [README.md](README.md) | Kurulum, kullanım, proje tanıtımı (GitHub/GitLab anasayfa) |
 > | [docs/](docs/) | Tanıtım web sitesi ([s3manager.bahadirdogru.com](https://s3manager.bahadirdogru.com/)) |
-> | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
-> | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
+> | [UI.md](UI.md) | Renk, tema token'ları, shadcn-svelte bileşen ve UX kuralları |
+> | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, eşzamanlılık (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |
-> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (changelog) |
+> | [process.md](process.md) | Kronolojik değişiklik kayıtları (changelog) |
 >
-> **Bu dosya:** Tasarım sistemi — renk, font, widget, QSS ve UX kuralları.
+> **Bu dosya:** Tasarım sistemi — renk token'ları, bileşenler, yerleşim ve UX kuralları.
 
-# Kullanıcı Arayüzü Standartları ve Stil Yönergeleri
+# Kullanıcı Arayüzü Standartları
 
-## Tasarım Prensipleri
+## Tasarım ilkeleri
 
-### Genel Yaklaşım - WhatsApp Inspired (PySide6/Qt 6)
+- **WhatsApp esinli:** koyu veya açık zemin, yeşil vurgular, yüksek kontrastlı metin.
+- **Masaüstü uygulaması gibi davran:** sayfa kaydırmaz (yalnızca paneller kayar), arayüz metni seçilemez (`user-select: none`; input, textarea ve `data-selectable` hariç), sağ tık menüsü ve kısayollar her yerde.
+- **Her zaman durum bilgisi:** yükleniyor iskeletleri, toast bildirimleri, durum çubuğu, transfer paneli.
+- **Tutarlılık:** yalnızca shadcn-svelte bileşenleri ve tema token'ları; özel bileşenler bunların üzerine kurulur.
 
-> **Geliştirme:** Yalnızca PySide6/Qt6 kullanılır (`requirements.txt`). Intel x86_64 DMG release'te Qt5 (PySide2) ile paketlenir; QSS veya native görünümde küçük farklar olabilir — büyük tema değişikliklerinden sonra release Intel build kontrol edilmeli. PySide6'ya özgü yeni API shim kapsamı dışında kalırsa Intel release kırılabilir; ayrıntı: [build/macos_x86_64/README.md](build/macos_x86_64/README.md).
+Yığın: **shadcn-svelte** (`vega` stili, `bits-ui` tabanlı), **Tailwind CSS 4**, **lucide** ikonları (`@lucide/svelte/icons/<ad>`), **Inter Variable** fontu, tema için **mode-watcher**.
 
-- **Modern ve Minimal**: Temiz, sade, zarif tasarım
-- **WhatsApp Aesthetic**: Koyu veya açık arka plan, yeşil vurgular, yüksek kontrast metin
-- **Native Performance**: Qt 6 ile GPU hızlandırmalı rendering
-- **Kullanıcı Dostu**: Sezgisel navigasyon ve işlemler
-- **Bilgilendirici**: Kullanıcıya her zaman durum bilgisi
-- **Tutarlı**: Tüm ekranlarda aynı stil ve davranış
-- **Elegant Spacing**: Generous padding ve margin'ler
-- **Subtle Effects**: Yumuşak gölgeler ve hover efektleri
+## Renk paleti
 
-## Renk Paleti - WhatsApp Inspired (QSS)
+Kaynak: `src/routes/layout.css` (`:root` = açık, `.dark` = koyu). Pazarlama sitesi (`docs/css/style.css`) aynı paleti kullanır; değişikliklerde iki dosyayı senkron tutun.
 
-Kaynak: `src/ui/qt/styles.py` — `ThemePalette`, `build_stylesheet()`, `apply_app_theme()`.
+| Token | Açık | Koyu | Kullanım |
+|-------|------|------|----------|
+| `--background` | `#F0F2F5` | `#0B141A` | Pencere zemini |
+| `--card` | `#FFFFFF` | `#151F26` | Araç çubuğu, paneller, durum çubuğu |
+| `--popover` | `#FFFFFF` | `#1A252D` | Diyalog, menü, tooltip |
+| `--muted` | `#F5F6F6` | `#243038` | Kart içi / tablo başlığı zemini |
+| `--secondary`, `--accent` | `#E9EDEF` | `#2A3942` | İkincil buton, hover |
+| `--foreground` | `#111B21` | `#E9EDEF` | Birincil metin |
+| `--muted-foreground` | `#667781` | `#AEBAC1` | İkincil metin |
+| `--border`, `--input` | `#D1D7DB` | `#3A4A54` | Kenarlık |
+| `--primary`, `--ring` | `#00A884` | `#00A884` | Birincil buton, klasör ikonu, odak halkası |
+| `--selected` | `#D9FDD3` | `#075E54` | Seçili tablo satırı |
+| `--success` | `#25D366` | `#25D366` | Bağlı göstergesi, tamamlanan transfer |
+| `--warning` | `#FFB800` | `#FFB800` | Herkese açık ACL, üzerine yazma uyarısı |
+| `--destructive` | `#EA0038` | `#EA0038` | Silme, hata |
 
-Pazarlama sitesi (`docs/css/style.css`) aynı WhatsApp-inspired paleti CSS custom properties ile kullanır; renk değişikliklerinde her iki dosyayı senkron tutun.
+Tailwind sınıfları: `bg-background`, `bg-card`, `bg-muted/40`, `text-muted-foreground`, `bg-primary`, `text-primary`, `bg-selected`, `text-success`, `text-warning`, `text-destructive`, `border` …
 
-### Qt Style Sheets (QSS) Tema
+### Tema kuralları
 
-- **Appearance Mode**: Dark (varsayılan) veya Light — toolbar `ThemeSwitch` (🌙/☀️) ile geçiş; tercih `~/.s3manager/config.ini` `[appearance] theme`
-- **QSS Theme**: WhatsApp-inspired palet; yeşil vurgular her iki modda aynı
-- **Semantik Renkler**:
-  - Başarı: `#25D366` (`WA_SUCCESS`)
-  - Hata: `#EA0038` (`WA_ERROR`)
-  - Uyarı: `#FFB800` (`WA_WARNING`)
-  - Birincil vurgu: `#00A884` (`WA_GREEN`)
-  - Parlak vurgu: `#25D366` (`WA_GREEN_BRIGHT`)
-
-### Widget Renkleri (Dark)
-
-- **Primary Buttons**: `#00A884` (`WA_GREEN`)
-- **Secondary Buttons**: `#2A3942` (`WA_BG_HOVER`)
-- **Selected Items**: `#075E54` (`WA_GREEN_DARK`)
-- **Background (ana pencere)**: `#0B141A`
-- **Panel Background**: `#151F26`
-- **Dialog Background**: `#1A252D`
-- **Elevated / Kart**: `#243038`
-- **Border**: `#3A4A54`
-- **Border Subtle**: `#2A3942`
-- **Text Primary**: `#E9EDEF`
-- **Text Secondary**: `#AEBAC1`
-- **Text Muted**: `#A0ADB4`
-
-### Widget Renkleri (Light)
-
-- **Background (ana pencere)**: `#F0F2F5`
-- **Panel / Dialog**: `#FFFFFF`
-- **Elevated / Kart**: `#F5F6F6`
-- **Hover**: `#E9EDEF`
-- **Text Primary**: `#111B21`
-- **Text Secondary**: `#667781`
-- **Text Muted**: `#8696A0`
-- **Border**: `#D1D7DB`
-- **Border Subtle**: `#E9EDEF`
-
-### Tema tutarlılığı kuralları
-
-- Tüm arka plan ve metin renkleri `ThemePalette` üzerinden `build_stylesheet()` ile uygulanır; widget’larda hardcode hex kullanılmaz (semantik `WA_ERROR` / `WA_SUCCESS` istisna).
-- Yeni bileşen: `objectName` ata → kural ekle [`styles.py`](src/ui/qt/styles.py).
-- Zorunlu global kurallar: `QScrollArea::viewport`, `QLineEdit:read-only`, genel `QTextEdit` / `QPlainTextEdit` fallback.
-- Kartlar: `QFrame#FormFrame` → `bg_panel` + `border_subtle` (light/dark palet değişkenleri).
-- Dialog tipografi: `DialogTitle`, `DialogTitleLarge`, `DialogSubtitle`, `UploadPhaseStatus`, `DialogSummaryResult`, `StatusSuccess`, `StatusError`.
-- Tema geçişi: `apply_app_theme()` → `app.setStyleSheet` + `_repolish_top_levels()` + açık `ElevatedDialog` gölge güncelleme (`update_dialog_elevation`).
-- Windows tablolar: `apply_item_view_palette()` — `QTableWidget` / `QTableView` viewport palet uyumu (QSS tek başına yetmeyebilir).
-- **İstisna:** `QMessageBox` native Windows/macOS görünümü — tema ile tam uyum beklenmez.
-
-**Manuel test matrisi (Dark + Light):** ana liste/önizleme, Ayarlar (6 sekme, Bakım dahil), Bağlan, Yükle/İndir (3 faz), Paylaş/Hedef yol, Nesne özellikleri; dialog açıkken toolbar tema switch.
-
-### ThemeSwitch (toolbar satır 1, sağ uç)
-
-Kaynak: `src/ui/qt/theme_switch.py` — `ConnectionIndicator` yanında.
-
-| Özellik | Değer |
-|---------|-------|
-| Boyut | 64×32 px |
-| objectName | `ThemeSwitch` |
-| Thumb | `ThemeSwitchThumb` (28×24 px, yeşil pill) |
-| İkonlar | `ThemeSwitchIcon` — sol 🌙 (koyu), sağ ☀️ (açık) |
-| Davranış | Sol/sağ yarı tıklama; `theme_changed` signal |
-
-### ConnectionIndicator (toolbar satır 1)
-
-Kaynak: `src/ui/qt/connection_indicator.py` — tema switch solunda.
-
-| Özellik | Değer |
-|---------|-------|
-| objectName | `ConnectionIndicator`, alt nokta `ConnectionIndicatorDot` |
-| Yeşil | Bağlı (`connectionState=connected`) |
-| Kırmızı | Bağlı değil / hata (`disconnected`) |
-| Sarı | Bağlanıyor (`connecting`, isteğe bağlı) |
-| Hover | Tooltip (bucket, bölge, endpoint) |
-| Tıklama | Bağlan dialogu |
-
-### İki satır Toolbar (`ToolbarFrame`)
-
-`QMenuBar` kaldırıldı; tüm üst navigasyon tek `ToolbarFrame` içinde:
-
-```
-Satır 1: [Bağlan][Yükle]…[Yeniden Adlandır]  stretch  [Ayarlar][●][ThemeSwitch]
-Satır 2: [Breadcrumb …]  [SearchEdit — kalan genişlik]  [← Geri]
-```
-
-| objectName | Bileşen |
-|------------|---------|
-| `ToolbarButton` | Satır 1 aksiyon `QPushButton` (Ayarlar dahil) |
-| `ToolbarBreadcrumbHost` | Satır 2 breadcrumb konteyneri |
-| `SearchEdit` | Arama — kalan tüm genişlik; breadcrumb uzadığında küçülür (min ~120px) |
-| `SecondaryButton` | Geri butonu |
-
-### Ayarlar dialogu (`SettingsDialog`)
-
-Toolbar **Ayarlar** butonu → modal `QDialog#ElevatedDialog` (~640×520), `QTabWidget#SettingsTabWidget`:
-
-| Sekme | İçerik |
-|-------|--------|
-| Bağlantı | Config yolu, bucket/bölge/endpoint, maskeli key/secret, güvenlik notu; Bağlantıyı düzenle → `LoginDialog`; Config klasörünü aç |
-| Yükleme Metadata | `UploadMetadataPanel` — otomatik Content-Type / Disposition / Cache-Control kuralları |
-| Görünüm | Koyu / Açık tema; önizleme anında; Kaydet ile persist; toolbar `ThemeSwitch` ile çift yönlü senkron |
-| Günlük | `app.log` yolu, `QPlainTextEdit#LogViewer` (son ~400 satır), Yenile / klasör aç / panoya kopyala |
-| Bakım | `IncompleteUploadsPanel` — yarım multipart listesi, iptal; `apply_theme()` + tablo paleti |
-| Yardım | Sürüm, GitHub Releases, güncelleme kontrolü, GPL-3.0 notu |
-
-Alt: **Kaydet** / **İptal** — metadata ve görünüm değişiklikleri Kaydet ile `config.ini`'ye yazılır.
-
-Eski toolbar **Yardım** menüsü ve **Metadata** butonu kaldırıldı; işlevleri bu dialoga taşındı.
-
-### Nesne özellikleri (`ObjectPropertiesDialog`)
-
-Context menu veya önizleme paneli **Özellikler** → `QDialog#ElevatedDialog`. Form alanları: Content-Type, Cache-Control, özel metadata satırları, ACL (private / public-read). `objectName`: `FormFrame`, `DialogTitle`, standart input kuralları.
-
-### Önizleme paneli (`PreviewPanel`)
-
-`QFrame#PreviewPanel` — split-view sağ panel. `PreviewTitle`, `PreviewMeta`, `PreviewTextView` (read-only), `PreviewPlaceholder`. Alt butonlar: İndir, Paylaş, **Özellikler** (`SecondaryButton`).
-
-### Katman Hiyerarşisi (derinlik)
-
-Ana pencere (en koyu) → Dialog (`WA_BG_DIALOG` + border + `apply_dialog_elevation()` gölge) → Kart (`UploadProgressCard`, `FormFrame`).
-
-- `QDialog#ElevatedDialog` — login, upload, share
-- `QWidget#UploadProgressCard` — dosya başına progress kartı
-- `QScrollArea#UploadScroll` — upload listesi alanı
-- `QLabel#ProgressMeta` — boyut, hız, durum metinleri (secondary kontrast)
+- Bileşenlerde **hex veya Tailwind palet rengi yazılmaz** (`bg-[#…]`, `bg-green-500` yok). Tek istisna: indirme oku `text-sky-500`.
+- Yeni anlamsal renk gerekiyorsa `layout.css`'te hem `:root` hem `.dark` altına değişken + `@theme inline` içine `--color-<ad>` eklenir.
+- Varsayılan tema **koyu**. Tercih `config.ini` `[appearance] theme`; `session.setTheme()` hem `mode-watcher`'ı hem dosyayı günceller.
 
 ## Tipografi
 
-### Font Boyutları
+| Kullanım | Sınıf |
+|----------|-------|
+| Gövde, tablo satırı | `text-sm` (14 px) |
+| İkincil bilgi, rozet, transfer satırı, durum çubuğu | `text-xs` (12 px) |
+| Endpoint alt başlığı | `text-[11px]` |
+| Diyalog başlığı | `Dialog.Title` varsayılanı |
+| Kod, URL, ETag, günlük | `font-mono text-xs` |
+| Sayılar (boyut, tarih, hız) | `tabular-nums` |
 
-- **Başlıklar**: 22pt, semibold (SF Pro Display style)
-- **Alt Başlıklar**: 17pt, semibold
-- **Normal Metin**: 15pt, regular
-- **Küçük Metin**: 13pt, regular
-- **Status Metinleri**: 13pt, regular
-- **Caption**: 11pt, regular
+## Yerleşim
 
-### Font Kullanımı (QSS)
-
-```css
-/* Başlık */
-QLabel#Title {
-    font-size: 22px;
-    font-weight: bold;
-}
-
-/* Alt başlık */
-QLabel#Subtitle {
-    font-size: 17px;
-    font-weight: bold;
-}
-
-/* Normal metin */
-QLabel {
-    font-size: 15px;
-}
-
-/* Küçük metin */
-QLabel#Small {
-    font-size: 13px;
-}
-
-/* Caption */
-QLabel#Caption {
-    font-size: 11px;
-}
+```
+┌ Araç çubuğu (h-12, bg-card) ───────────────────────────────────────────────┐
+│ ● bucket/endpoint │ Yükle  Klasör Yükle  Yeni Klasör  İndir  Sil   [Ara] ⧉ ☀ ⚙ ⏻ │
+├ Yol çubuğu (h-10) ─────────────────────────────────────────────────────────┤
+│ ← ⟳  root / klasör / alt                                                    │
+├ İçerik: Resizable.PaneGroup ───────────────────────────┬───────────────────┤
+│ FileTable (Ad · Boyut · Değiştirilme · Erişim)         │ PreviewPanel      │
+│                                                        │ (açılıp kapanır)  │
+├ TransferPanel (yalnızca transfer varsa; katlanır) ─────┴───────────────────┤
+├ Durum çubuğu (h-7): n klasör, m dosya · seçim · işlem · sürüm ─────────────┤
 ```
 
-## Widget Standartları - PySide6/Qt
+- Pencere: 1280×820 varsayılan, en az 900×560.
+- Önizleme paneli genişliği `autoSaveId="s3m-main"` ile hatırlanır.
+- Araç çubuğu düğmeleri `variant="ghost" size="sm"`, etiket `xl` genişlikten itibaren görünür, her düğmede tooltip + kısayol.
+- Tablo satırı `h-8`; `content-visibility: auto` ile binlerce satırda bile hızlı.
 
-### Butonlar (QPushButton)
+## Bileşen kuralları
 
-**Boyutlar**:
-- Standart: `width=130, height=32`
-- Büyük: `width=200, height=36`
-- Küçük: `width=90, height=28`
-- Compact: `width=70, height=24`
+| Durum | Bileşen |
+|-------|---------|
+| Basit metin girişi (yeni klasör, yeniden adlandır, hedef klasör) | `dialogs.prompt()` → `DialogHost` |
+| Onay (silme, bağlantıyı kesme, multipart iptal) | `dialogs.confirm({ destructive: true })` → `AlertDialog` |
+| Özellik diyaloğu | `Dialog.Root` + `ui` store durumu (`UploadDialog`, `ShareDialog`, `PropertiesDialog`, `SettingsDialog`) |
+| Kısa geri bildirim | `toast.success / error / info / warning`; uzun işlemde `toast.loading` + aynı `id` ile güncelle |
+| Satır menüsü | `ContextMenu` (FileTable) — seçim yoksa yalnızca klasör işlemleri |
+| İlerleme | `Progress` (`h-1.5`) |
+| Açık/kapalı ayar | `Switch` satırı: `flex justify-between rounded-md border p-3` |
+| Yükleniyor | Liste için `Skeleton`, düğme içinde `Loader2Icon animate-spin` |
 
-**Stiller** (QSS):
-```css
-QPushButton {
-    background-color: #00A884;
-    color: white;
-    border-radius: 6px;
-    padding: 6px 15px;
-    font-size: 13px;
-    font-weight: bold;
-    border: none;
-}
-
-QPushButton:hover {
-    background-color: #06CF9C;
-}
-
-QPushButton:disabled {
-    background-color: #2A3942;
-    color: #8696A0;
-}
-
-QPushButton#SecondaryButton {
-    background-color: #2A3942;
-    color: #E9EDEF;
-}
-
-QPushButton#SecondaryButton:hover {
-    background-color: #2A3942;
-}
-
-QPushButton#BreadcrumbButton {
-    background-color: transparent;
-    color: #25D366;
-    border: none;
-    padding: 2px 6px;
-    font-weight: normal;
-}
-```
-
-### Giriş Alanları (QLineEdit)
-
-**Boyutlar**:
-- Standart: `width=300, height=36`
-- Geniş: `setMinimumWidth(400)`
-
-**QSS Stil**:
-```css
-QLineEdit {
-    background-color: #202C33;
-    color: #E9EDEF;
-    border: 1px solid #2A3942;
-    border-radius: 6px;
-    padding: 8px;
-    font-size: 14px;
-}
-
-QLineEdit:focus {
-    border: 1px solid #00A884;
-}
-```
-
-**Özel Durumlar**:
-- Şifre alanları: `setEchoMode(QLineEdit.Password)`
-
-### Açılır Menüler (QComboBox)
-
-**QSS Stil**:
-```css
-QComboBox {
-    background-color: #202C33;
-    color: #E9EDEF;
-    border: 1px solid #2A3942;
-    border-radius: 6px;
-    padding: 8px;
-    font-size: 14px;
-}
-
-QComboBox::drop-down {
-    border: none;
-    width: 20px;
-}
-
-QComboBox QAbstractItemView {
-    background-color: #202C33;
-    color: #E9EDEF;
-    selection-background-color: #075E54;
-}
-```
-
-### Çerçeveler (QFrame)
-
-**Padding**:
-- Standart: `setContentsMargins(24, 16, 24, 16)`
-- Kompakt: `setContentsMargins(12, 8, 12, 8)`
-- Geniş: `setContentsMargins(32, 24, 32, 24)`
-
-**QSS Stil**:
-```css
-QFrame#FormFrame {
-    background-color: #202C33;
-    border-radius: 12px;
-}
-
-QFrame#ToolbarFrame {
-    background-color: #111B21;
-    border-bottom: 1px solid #2A3942;
-}
-
-QFrame#BreadcrumbFrame {
-    background-color: #111B21;
-    border-bottom: 1px solid #2A3942;
-}
-```
-
-### Dosya Listesi (QTreeView)
-
-**QSS Stil**:
-```css
-QTreeView {
-    background-color: #0B141A;
-    color: #E9EDEF;
-    border: none;
-    outline: none;
-}
-
-QTreeView::item {
-    height: 38px;
-    border-bottom: 1px solid #111B21;
-}
-
-QTreeView::item:selected {
-    background-color: #075E54;
-    color: #FFFFFF;
-}
-
-QTreeView::item:hover {
-    background-color: #2A3942;
-}
-
-QHeaderView::section {
-    background-color: #202C33;
-    color: #E9EDEF;
-    padding: 8px 5px;
-    border: none;
-    border-bottom: 2px solid #075E54;
-    font-weight: bold;
-}
-```
-
-## Layout Standartları - Qt
-
-### Pencere Boyutları
-
-- **Ana Pencere**: `1100x750`
-- **Dialog'lar**: 
-  - Login: `520x520`
-  - Upload: `720x640`
-  - Download: `720x640`
-  - Share: `420x240`
-
-### Padding ve Spacing (Qt Layouts)
-
-- **Widget'lar arası**: `setSpacing(8-12)`
-- **Bölümler arası**: `setSpacing(24)`
-- **Form elemanları**: `setContentsMargins(16, 12, 16, 12)`
-- **List items**: `setSpacing(4)`
-
-### Layout Types
-
-- **Form'lar**: `QVBoxLayout`, `QHBoxLayout` (düzenli hizalama için)
-- **Grid'ler**: `QGridLayout` (tablo benzeri yapılar için)
-- **Scroll Areas**: `QScrollArea` (uzun içerik için)
+- Yıkıcı işlemler `variant="destructive"` ve onay ister; onay metni geri alınamazlığı söyler.
+- Diyalog altbilgisi: solda `Vazgeç` (`variant="outline"`), sağda birincil işlem.
+- Seçilebilir olması gereken her metin (hata mesajı, URL, metadata, günlük) `data-selectable` alır.
 
 ## İkonlar
 
-### Dosya Türü İkonları (Qt Standard Icons)
+Lucide, `@lucide/svelte/icons/<ad>` ile tek tek import edilir (ağaç sallama için).
 
-- 📁 Klasör: `QStyle.SP_DirIcon`
-- 📄 Dosya: `QStyle.SP_FileIcon`
+| Öğe | İkon |
+|-----|------|
+| Klasör | `folder` (`text-primary`) |
+| Görsel / kod / metin / arşiv / video / ses / diğer | `file-image`, `file-code`, `file-text`, `file-archive`, `file-video`, `file-audio`, `file` |
+| ACL | `globe` (herkese açık, `text-warning`), `lock` (özel) |
+| Transfer | `arrow-up` (yükleme, `text-primary`), `arrow-down` (indirme) |
+| Durum | `check`, `circle-alert`, `ban` |
 
-### Aksiyon İkonları (Emoji)
+## UX kuralları
 
-- 🔌 Bağlan
-- 📤 Yükle
-- 🔄 Yenile
-- 🔗 Paylaş
-- 📥 İndir
-- 🔒 Private
-- 🔓 Public
-- ← Geri
-- ✓ Başarılı
-- ✗ Hata
-
-## Kullanıcı Deneyimi Kuralları
-
-### Geri Bildirim (Qt)
-
-1. **Her Aksiyon İçin**:
-   - Başarı: `QMessageBox.information()`
-   - Hata: `QMessageBox.critical()`
-   - Bilgi: `QMessageBox.information()`
-
-2. **Progress Gösterimi**:
-   - Upload işlemleri için `QProgressBar` ve detaylı bilgi (yüzde, yüklenen boyut, hız MB/s)
-   - Genel ilerleme çubuğu: tüm dosyaların byte toplamına göre ağırlıklı yüzde
-   - Büyük dosyalarda multipart bilgisi (part sayısı / tamamlanan)
-   - Status mesajları (upload_service callback zincirinde deadlock düzeltildi; büyük dosyalarda da güncellenir)
-   - Yeni dosya/klasör seçiminde progress alanı temizlenir; sadece seçilen dosyalar yüklenir (liste extend değil replace)
-
-### Upload Dialog (`UploadDialog`)
-
-Üç fazlı akış (`QStackedWidget`):
-
-1. **Seçim** — `DropZoneFrame` (sürükle-bırak + Dosya/Klasör Seç), `UploadFileList` (liste veya klasör ağacı), özet satırı (adet · boyut · ACL), ACL radio
-2. **Yükleme** — genel progress bar, dosya başına `UploadProgressBar`, İptal / Kapat
-3. **Özet** — başarı/hata sayısı veya iptal mesajı; Yeni Yükleme ile Faz 1'e dönüş
-
-- Klasör modunda `QTreeWidget` ile relative path önizlemesi (max 200 dosya + truncate uyarısı)
-- Tekil silme: liste satırındaki ✕ veya ağaç sütunundaki ✕
-- İptal: `cancel_requested` → worker interruption + `UploadService` yeniden oluşturma
-- Dialog boyutu: `720x640`, non-blocking `show()`
-
-### Download Dialog (`DownloadDialog`)
-
-Upload ile simetrik üç fazlı akış:
-
-1. **Onay** — seçili uzak öğe listesi (`DownloadItemList`), hedef klasör seçimi, özet satırı (adet · boyut · hedef)
-2. **İndirme** — başlık satırında toplam hız, genel progress bar, dosya başına `UploadProgressBar`, İptal / Kapat
-3. **Özet** — başarı/hata/iptal sayısı; Kapat ile dialog kapanır (yeni indirme ana pencereden)
-
-- Öğeler ana pencereden seçilir; dialog `show_download()` ile açılır
-- Klasör seçiminde iç dosyalar `build_download_tasks()` ile genişletilir
-- Paralel indirme: max 3 (`ParallelDownloadWorker`)
-- İptal: `cancel_requested` → HTTP kesme + worker interruption
-- Dialog boyutu: `720x640`, non-blocking `show()`
-
-3. **Loading Durumları**:
-   - \"Yükleniyor...\" status mesajı
-   - Disable edilmiş butonlar: `setEnabled(False)`
-   - Progress bar'lar
-
-### Modal Dialog'lar (QDialog)
-
-- **Centered**: `move(parent.geometry().center() - self.rect().center())`
-- **Modal**: `setModal(True)` veya `exec()`
-- **Parent**: `QDialog(parent)`
-- **Kapatma**: Cancel butonu veya X
-
-### Context Menüler (QMenu)
-
-- Sağ tık ile açılır
-- Dosya türüne göre farklı seçenekler
-- `QMenu` ve `QAction` kullanımı
-
-### Navigasyon
-
-- **Breadcrumb**: Üst kısımda, path gösterimi
-- **Geri Butonu**: Sol üstte, sadece root'ta değilken aktif
-- **Çift Tık**: Klasöre girmek için (QTreeView double-click)
-
-## Qt Model/View Architecture
-
-### FileModel (QAbstractItemModel)
-
-- **Virtual Scrolling**: Sadece görünen satırlar çizilir
-- **Yüksek Performans**: Binlerce dosya ile %0 kayıp
-- **Otomatik Güncelleme**: Model değişince view otomatik güncellenir
-
-### QTreeView
-
-- **Sütunlar**: İsim, Boyut, Tarih, İzin
-- **Sıralama**: Header'a tıklayarak
-- **Seçim**: Single selection mode
-
-## Threading (QThread)
-
-### Worker Threads
-
-```python
-class SpacesWorker(QThread):
-    finished = Signal(dict)
-    error = Signal(str)
-    
-    def run(self):
-        try:
-            # Network işlemi
-            result = self.spaces_client.list_objects()
-            self.finished.emit(result)
-        except Exception as e:
-            self.error.emit(str(e))
-```
-
-### Signals/Slots
-
-```python
-# Worker oluştur
-worker = SpacesWorker()
-worker.finished.connect(self.on_list_finished)
-worker.error.connect(self.on_error)
-worker.start()
-
-@Slot(dict)
-def on_list_finished(self, result):
-    # UI güncelleme
-    self.file_model.set_items(result['items'])
-```
-
-## Hata Yönetimi UI (Qt)
-
-### Hata Mesajları
-
-```python
-QMessageBox.critical(
-    self,
-    "Hata",
-    "Bağlantı kurulamadı. Lütfen bilgilerinizi kontrol edin."
-)
-```
-
-### Logging Entegrasyonu
-
-Tüm UI işlemleri logger ile kaydedilir:
-
-```python
-from src.utils.logging_config import get_logger
-
-logger = get_logger('main_window')
-
-# UI işlemlerinde
-logger.info("Upload başlatıldı")
-logger.error("Upload hatası", exc_info=True)
-logger.debug("Signal emit edildi")
-```
-
-### Validasyon
-
-- **Real-time**: Input alanlarında
-- **Hata Gösterimi**: Kırmızı label altında
-- **Buton Durumu**: Geçersiz input'ta `setEnabled(False)`
-
-## Tutarlılık Kontrol Listesi
-
-- [x] Tüm butonlar aynı boyut standardında (QSS)
-- [x] Tüm mesajlar Türkçe
-- [x] Hata mesajları kırmızı
-- [x] Başarı mesajları yeşil
-- [x] Dialog'lar ortalanmış
-- [x] Progress bar'lar tutarlı stil
-- [x] İkonlar anlamlı ve tutarlı
-- [x] Padding ve spacing standartlara uygun (Qt layouts)
-- [x] Qt Model/View mimarisi kullanılıyor
-- [x] QThread ile async işlemler
-- [x] QSS ile tutarlı tema
-
-## Görsel Özellikler (Qt ile)
-
-### Visual Hierarchy
-
-- **Clear Hierarchy**: Başlıklar, alt başlıklar, body text arasında net hiyerarşi
-- **Visual Breathing Room**: Generous spacing, her element'in nefes alacak alanı
-- **Subtle Separators**: İnce, yumuşak ayırıcılar
-- **Rounded Corners**: Tüm köşeler yuvarlatılmış (`border-radius: 6-12px`)
-
-### Interaction Design
-
-- **Smooth Hover**: Yumuşak hover efektleri (QSS `:hover`)
-- **Clear Feedback**: Her etkileşimde net geri bildirim (Signals/Slots)
-- **Minimal Icons**: Sade, minimal ikon kullanımı (Qt Standard Icons)
-- **Clean Typography**: Okunabilir, modern font kullanımı
-
-### Color Usage
-
-- **WhatsApp Palette**: `styles.py` içindeki `WA_*` sabitleri; inline stillerde de bunlar kullanılır
-- **Green Accents**: Butonlar, breadcrumb, progress bar ve seçim vurgusu
-- **High Contrast Text**: Sütun başlıkları ve durum metni açık renk (`#E9EDEF` / `#AEBAC1`)
-- **Background Layers**: `WA_BG` → `WA_BG_PANEL` → `WA_BG_ELEVATED` derinlik katmanları
-
-## Performans (Qt Avantajları)
-
-- **GPU Rendering**: Qt 6 ile donanım hızlandırmalı çizim
-- **Virtual Scrolling**: QAbstractItemModel ile sadece görünen satırlar
-- **Native Look**: İşletim sisteminin native widget'ları
-- **Smooth Animations**: Qt'nin built-in animasyon desteği
-
-## Breadcrumb ve navigasyon
-
-- Breadcrumb: `ToolbarFrame` 2. satırında `ToolbarBreadcrumbHost` içinde
-- Segment butonları: `QPushButton#BreadcrumbButton` — şeffaf arka plan, `#25D366` metin
-- Ayırıcı: `QLabel#BreadcrumbSep` — `#8696A0`
-- Bağlantı durumu: `ConnectionIndicator` (yeşil/kırmızı nokta + tooltip); işlem mesajları tooltip üzerinden
-- Geri butonu: 2. satır sağ; root'ta disabled
+- **Navigasyon:** çift tık / Enter klasörü açar, dosyada özellikleri açar; Backspace ve Alt+← geri; breadcrumb her parçaya tıklanabilir.
+- **Seçim:** tıklama tek seçim, Ctrl/⌘ ekle-çıkar, Shift aralık; sağ tık mevcut çoklu seçimi korur; boş alana tıklama seçimi bırakır.
+- **Arama:** 300 ms debounce, sunucu tarafı önek; Esc temizler.
+- **Yükleme:** seçim/bırakma önce `UploadDialog`'da listelenir; üzerine yazılacak dosyalar `text-warning` ile işaretlenir.
+- **Kopyalama aynı klasöre:** `ad (kopya n).uzantı`.
+- **Paylaşım:** link oluşturulur oluşturulmaz panoya kopyalanır ve toast gösterilir.
+- **Transfer paneli:** yeni transferde açılır; aktifken toplam yüzde, bitince "Bitenleri temizle"; tamamlanan indirmede "Klasörde göster".
+- **Hata gösterimi:** S3 hata kodu mesajda görünür (`Silme hatası: AccessDenied`); ayrıntı `app.log`'da.
 
 ## Klavye kısayolları
 
-- **F5** — Yenile
-- **Del** — Seçilenleri sil
-- **Ctrl+A** — Tümünü seç
-- **Escape** — Seçimi bırak
+| Tuş | İşlem |
+|-----|-------|
+| F5 / Ctrl+R | Yenile |
+| Del | Sil |
+| F2 | Yeniden adlandır |
+| Ctrl+A / Esc | Tümünü seç / seçimi bırak |
+| Ctrl+C / Ctrl+X | Kopyala… / Taşı… |
+| Ctrl+U | Dosya yükle |
+| Ctrl+Shift+N | Yeni klasör |
+| Ctrl+F | Aramaya odaklan |
+| Enter | Aç / Özellikler |
+| Backspace, Alt+← | Geri |
+
+Kısayollar input'ta yazarken ve bir diyalog açıkken devre dışıdır.

@@ -6,12 +6,13 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/bahadirdogru/S3MANAGER?label=release)](https://github.com/bahadirdogru/S3MANAGER/releases)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython/)
+[![Tauri](https://img.shields.io/badge/Tauri-2-24C8DB?logo=tauri&logoColor=white)](https://tauri.app/)
+[![Rust](https://img.shields.io/badge/Rust-backend-000000?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![SvelteKit](https://img.shields.io/badge/SvelteKit-TypeScript-FF3E00?logo=svelte&logoColor=white)](https://svelte.dev/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)](https://github.com/bahadirdogru/S3MANAGER/releases)
 [![Website](https://img.shields.io/badge/Website-s3manager.bahadirdogru.com-00A884)](https://s3manager.bahadirdogru.com/)
 
-[Features](#features) · [Installation](#installation) · [Website](https://s3manager.bahadirdogru.com/) · [Roadmap](#roadmap) · [Usage](#usage) · [Distribution](#distribution-local-build) · [Documentation](#documentation)
+[Features](#features) · [Installation](#installation) · [Website](https://s3manager.bahadirdogru.com/) · [Roadmap](#roadmap) · [Usage](#usage) · [Development](#development) · [Documentation](#documentation)
 
 </div>
 
@@ -24,16 +25,18 @@
 > | [README.md](README.md) | Installation, usage, project overview (English — GitHub/GitLab homepage) |
 > | [readmetr.md](readmetr.md) | Kurulum, kullanım, proje tanıtımı (Türkçe) |
 > | [docs/](docs/) | Marketing website ([s3manager.bahadirdogru.com](https://s3manager.bahadirdogru.com/)) |
-> | [UI.md](UI.md) | Color, font, widget, and QSS design standards |
-> | [ARCHITECTURE.md](ARCHITECTURE.md) | Architecture layers, data flow, threading (human-readable) |
+> | [UI.md](UI.md) | Colors, theme tokens, shadcn-svelte component and UX rules |
+> | [ARCHITECTURE.md](ARCHITECTURE.md) | Architecture layers, data flow, concurrency (human-readable) |
 > | [LLM.md](LLM.md) | Current code structure, file map, development constraints (LLM) |
-> | [PROCESS.md](PROCESS.md) | Chronological change log (changelog) |
+> | [PROCESS.md](process.md) | Chronological change log (changelog) |
 >
 > Turkish version: [readmetr.md](readmetr.md)
 
 ## About
 
-**S3MANAGER** lets you manage files on DigitalOcean Spaces with a local desktop application experience. Upload, download, sharing, and folder management come together in a single modern interface.
+**S3MANAGER** lets you manage files on DigitalOcean Spaces — or any S3-compatible service such as AWS S3, MinIO or Cloudflare R2 — with a native desktop experience. Upload, download, sharing and folder management come together in a single modern interface.
+
+Since v0.1.0 the app is built with **Tauri 2**: a **Rust** backend (`aws-sdk-s3`, `tokio`) and a **SvelteKit + TypeScript** frontend using **shadcn-svelte** components. The earlier PySide6 (Python) version is available in releases up to v0.0.9.
 
 This project is developed by [Bahadır Doğru](https://bahadirdogru.com) under the name **S3MANAGER** and is released as open source under the **GPL-3.0** license.
 
@@ -44,36 +47,36 @@ This project is developed by [Bahadır Doğru](https://bahadirdogru.com) under t
 <td width="50%" valign="top">
 
 ### 📁 File Explorer
-- Folder tree view
-- Paginated lazy loading
-- Breadcrumb navigation
-- Column sorting, multi-select
+- Breadcrumb navigation, back history
+- Paginated lazy loading (infinite scroll)
+- Column sorting, Ctrl/Shift multi-select
 - Copy / move / rename (F2, Ctrl+C/X)
-- Toolbar search (prefix filter)
-- Right-panel file preview (images, text)
+- Server-side prefix search
+- Right-panel preview (images, text)
+- Lazy ACL badges for visible rows
 
 ### ⬆️ Upload
 - File and folder upload
-- Drag-and-drop onto main window
+- Drag-and-drop onto the main window
 - Private / Public ACL
-- Automatic Content-Type and Content-Disposition (html, zip, css, js, etc.)
-- Multipart (>100 MB)
-- Parallel uploads (max 3)
+- Automatic Content-Type, Content-Disposition, Cache-Control
+- Multipart (>16 MB) with per-part progress
+- Parallel uploads (max 3); cancel aborts the multipart upload
 
 </td>
 <td width="50%" valign="top">
 
 ### ⬇️ Download & Share
-- Single / multi-file download
-- Folder download
-- 3- or 7-day presigned URLs
-- Automatic clipboard copy
+- Single / multi-file and folder download
+- Written to `.part`, renamed when complete
+- 3- or 7-day presigned URLs, copied to clipboard
+- Public URL for public-read objects
 
 ### 🎨 Modern UI
-- PySide6 (Qt 6)
+- Tauri 2 + SvelteKit + shadcn-svelte
 - WhatsApp-inspired dark/light theme
-- Qt standard toolbar icons
-- Transfer history panel
+- Transfer panel with speed and progress
+- Toast notifications, keyboard shortcuts
 - Details: [UI.md](UI.md)
 
 </td>
@@ -84,94 +87,133 @@ This project is developed by [Bahadır Doğru](https://bahadirdogru.com) under t
 
 ![S3MANAGER main window](docs/screenshots/main-dark.png)
 
-More screenshots: [marketing site](https://s3manager.bahadirdogru.com/#ekran-goruntuleri) · Refresh: `python scripts/capture_screenshots.py`
-
-## Requirements
-
-- Python 3.10+
-- DigitalOcean Spaces account and access keys
+More screenshots: [marketing site](https://s3manager.bahadirdogru.com/#ekran-goruntuleri)
 
 ## Installation
 
-### From source (development)
-
-**Quick start** (Linux/macOS/Git Bash):
-
-```bash
-git clone https://github.com/bahadirdogru/S3MANAGER.git
-cd S3MANAGER
-./start.sh
-```
-
-`start.sh` creates a venv, installs dependencies, and starts the app. On Windows, use Git Bash or WSL.
-
-**Manual setup:**
-
-```bash
-git clone https://github.com/bahadirdogru/S3MANAGER.git
-cd S3MANAGER
-python -m venv venv
-venv\Scripts\activate          # Windows
-# source venv/bin/activate     # Linux/macOS
-pip install -r requirements.txt
-python src/main.py
-```
-
-On first run, use **Connect** to enter Key, Secret, Region, Endpoint, and Bucket. Credentials are saved to `~/.s3manager/config.ini`.
-
-> **Note:** If you used an older version before, settings in `~/.pydamlaspace/` are automatically migrated to `~/.s3manager/` on first launch.
-
 ### Binary (end user)
 
-To use without installing Python, download the file for your platform from [Releases](https://github.com/bahadirdogru/S3MANAGER/releases) (see the [Releases](#releases) section below).
+Download the file for your platform from [Releases](https://github.com/bahadirdogru/S3MANAGER/releases):
+
+| Platform | File |
+|----------|------|
+| Windows | `S3MANAGER_<version>_x64-setup.exe` (NSIS) or `S3MANAGER_<version>_x64_en-US.msi` |
+| macOS (Apple Silicon) | `S3MANAGER_<version>_aarch64.dmg` |
+| macOS (Intel) | `S3MANAGER_<version>_x64.dmg` |
+| Linux x86_64 | `.AppImage`, `.deb` or `.rpm` |
+
+Minimum macOS is **10.15 Catalina** (Tauri/WKWebView). Linux needs WebKitGTK 4.1 (preinstalled on current GNOME/KDE distributions).
+
+> **Note:** Binaries are not code-signed; Windows SmartScreen / macOS Gatekeeper may show warnings.
+
+### From source
+
+Requirements: [Rust](https://rustup.rs/) (stable), Node.js 22+, pnpm, and the [Tauri system prerequisites](https://tauri.app/start/prerequisites/) (on Fedora: `webkit2gtk4.1-devel gtk3-devel libsoup3-devel openssl-devel`).
+
+```bash
+git clone https://github.com/bahadirdogru/S3MANAGER.git
+cd S3MANAGER
+pnpm install
+pnpm tauri dev
+```
+
+On first run enter your access key, secret, region/endpoint and bucket. Credentials are saved to `~/.s3manager/config.ini` — the same file the Python version used, so existing settings keep working.
+
+## Usage
+
+### Connection
+
+1. Choose **DigitalOcean Spaces** (pick a region) or **Other S3-compatible** (endpoint, region, optional path-style addressing for MinIO and similar)
+2. Enter bucket, access key and secret → **Connect** (connection is validated with `HeadBucket`)
+3. With saved credentials the app connects automatically on launch
+
+### File explorer
+
+- Double-click (or Enter) a folder to open it; navigate with breadcrumbs, **Back** (Backspace / Alt+←), **Refresh** (F5)
+- Click column headers to sort; Ctrl/Shift-click to multi-select; right-click for the context menu
+- Search box filters the current folder by name prefix on the server
+
+### Upload
+
+1. **Upload File** / **Upload Folder**, or drag files onto the window
+2. Review the list (files that will be overwritten are marked), choose Private/Public → **Start upload**
+3. Progress, speed and status appear in the bottom transfer panel; each transfer can be cancelled
+
+Content-Type and Content-Disposition are set from the file extension (e.g. `.html` opens in the browser, `.zip` downloads). Rules are edited in **Settings → Metadata** (`[upload_metadata]` in `config.ini`).
+
+### Download
+
+Select files/folders → **Download** → choose a destination folder. Folders are downloaded recursively. Finished downloads have a **Show in folder** button.
+
+### Share
+
+Right-click a file → **Share (3 days)** / **Share (7 days)**. The presigned link is copied to the clipboard automatically.
+
+### Object properties
+
+Right-click → **Properties** (or Enter / double-click on a file): edit Content-Type, Cache-Control, Content-Disposition, custom metadata (`x-amz-meta-*`) and ACL. Public objects show their public URL.
+
+### Settings
+
+| Tab | Function |
+|-----|----------|
+| Connection | Current bucket/region/endpoint; change connection |
+| Metadata | Content-Type / Disposition / Cache-Control rules |
+| Appearance | Dark / light theme |
+| Log | Last lines of `~/.s3manager/app.log` |
+| Maintenance | List / abort incomplete multipart uploads |
+| About | Version, update check (GitHub Releases), links |
+
+### Keyboard shortcuts
+
+| Key | Action |
+|-----|--------|
+| F5 / Ctrl+R | Refresh |
+| Del | Delete selected |
+| F2 | Rename |
+| Ctrl+A / Esc | Select all / clear selection |
+| Ctrl+C / Ctrl+X | Copy / move selected to a folder |
+| Ctrl+U | Upload files |
+| Ctrl+Shift+N | New folder |
+| Ctrl+F | Focus search |
+| Enter | Open folder / file properties |
+| Backspace, Alt+← | Back |
 
 ## Roadmap
 
-Prioritized development plan for S3-compatible storage (boto3). Items are ordered by gaps in the current codebase; contributions and suggestions are welcome via [Issues](https://github.com/bahadirdogru/S3MANAGER/issues).
+Contributions and suggestions are welcome via [Issues](https://github.com/bahadirdogru/S3MANAGER/issues).
 
 ### Near term — core S3 operations
 
 | Feature | Description | Status |
 |---------|-------------|--------|
 | **Multiple connection profiles** | Save multiple bucket/endpoint entries; quick switching | Planned |
-| **Credential security** | OS keyring or encrypted credential storage | Planned |
-| **Presigned upload URL** | `put_object` presigned sharing | Planned |
-| **Public / CDN URL display** | Direct URL for public-read objects | Planned |
+| **Credential security** | OS keyring instead of plain-text `config.ini` | Planned |
+| **Presigned upload URL** | `PutObject` presigned sharing | Planned |
+| **Auto-updater** | Tauri updater plugin with signed bundles | Planned |
 
 ### Mid term — productivity and management
 
 | Feature | Description | Status |
 |---------|-------------|--------|
 | **Upload resume** | Resume interrupted multipart uploads | Planned |
-| **Bucket management (boto3)** | CORS, lifecycle, versioning, policy, logging, website | Planned |
-| **Object tagging** | `get/put_object_tagging` — DO compatibility needs testing | Planned |
+| **Bucket management** | CORS, lifecycle, versioning, policy, website | Planned |
+| **Object tagging** | `Get/PutObjectTagging` — DO compatibility needs testing | Planned |
+| **Large-object copy** | `UploadPartCopy` for objects > 5 GB | Planned |
 
-### DigitalOcean Platform API (outside boto3)
+### DigitalOcean Platform API
 
-Does **not** work with Spaces access keys; requires a separate **DO API token**.
+Requires a separate **DO API token** (Spaces keys do not work).
 
 | Feature | API | Status |
 |---------|-----|--------|
 | **CDN cache purge** | `DELETE /v2/cdn/endpoints/{id}/cache` | Planned |
 | CDN endpoint list / TTL / custom domain | `/v2/cdn/endpoints` | Planned |
 
-### Long term — later
+### Completed
 
-| Feature | Description | Note |
-|---------|-------------|------|
-| **File preview (advanced)** | PDF viewer, more formats, editing | Basic split-view preview added; PDF and advanced types deferred |
-
-### Completed (v0.0.7+)
-
-- **Object properties** — Content-Type, Cache-Control, `x-amz-meta-*`, ACL editing (context menu / preview)
-- **Incomplete multipart management** — Settings → Maintenance tab (list / abort)
-- **Bulk file deletion** — `delete_objects` batch API
-- **Rename / move / copy** — context menu, toolbar, F2/Ctrl+C/Ctrl+X
-- **Prefix search and filter** — toolbar search box (current folder)
-- **Drag-and-drop upload** — drop files onto main window
-- **Transfer history** — upload/download records in bottom panel
-- **Toolbar icons** — Qt standard icon set
-- **File preview (MVP)** — split-view right panel; image and text files
+- **v0.1.0** — Rewrite in Tauri 2 (Rust + SvelteKit/TypeScript + shadcn-svelte); any S3-compatible endpoint; ACL preserved on copy/move/metadata edits; public URL display; cancel aborts multipart uploads
+- **v0.0.7+** — Object properties, incomplete multipart management, bulk delete, rename/move/copy, prefix search, drag-and-drop, transfer history, preview panel
 
 ### Deliberately out of scope (for now)
 
@@ -179,145 +221,46 @@ Does **not** work with Spaces access keys; requires a separate **DO API token**.
 - Glacier / deep archive storage class transitions
 - Server-side encryption (SSE-KMS) configuration wizard
 
-## Releases
-
-Latest version: **[v0.0.8](https://github.com/bahadirdogru/S3MANAGER/releases/tag/v0.0.8)** — download from [GitHub Releases](https://github.com/bahadirdogru/S3MANAGER/releases). Changelog: [PROCESS.md](PROCESS.md).
-
-| Platform | File | Min. macOS |
-|----------|------|------------|
-| Windows | `S3MANAGER-0.0.8-windows-setup.exe` (NSIS installer) or `S3MANAGER-0.0.8-windows-portable.zip` | — |
-| macOS (Apple Silicon) | `S3MANAGER-0.0.8-macos-arm64.dmg` | 13 Ventura+ |
-| macOS (Intel) | `S3MANAGER-0.0.8-macos-x86_64.dmg` | 10.13 High Sierra+ |
-| Linux x86_64 | `S3MANAGER-0.0.8-linux-x86_64.tar.gz` or `S3MANAGER-0.0.8-linux-x86_64.AppImage` | — |
-
-**macOS:** Apple Silicon (M-series) Macs should download `macos-arm64.dmg`. Intel Macs should use `macos-x86_64.dmg`.
-
-The app checks for updates from GitHub Releases on startup. Manual check is available in **Settings → Help**. If a new version is found, the download page opens in your browser.
-
-> **Note:** Binaries are not code-signed; Windows Defender / macOS Gatekeeper may show warnings.
-
-### Release for developers
-
-```bash
-# Update version in src/version.py, commit
-git tag v0.0.8
-git push origin main
-git push origin v0.0.8
-```
-
-When a `v*.*.*` tag is pushed, GitHub Actions automatically builds on Windows, macOS (arm64 + Intel x86_64), and Linux, and creates a [GitHub Release](https://github.com/bahadirdogru/S3MANAGER/releases) (6 binary artifacts).
-
-> **macOS development note:** Daily development and CI use PySide6 only. The Intel Mac (10.13+) DMG is produced separately at release time via the PySide6→PySide2 shim in `build/macos_x86_64/` and **python.org 3.10.11**. You do not need PySide2 in your local venv. Details: [build/macos_x86_64/README.md](build/macos_x86_64/README.md)
-
-## Distribution (local build)
-
-Local builds with PyInstaller **onedir** must run on the target platform (no cross-compile).
-
-| Platform | Command | Output |
-|----------|---------|--------|
-| Windows | `.\scripts\package-windows.ps1 -Version 0.0.8` | NSIS installer + portable zip |
-| macOS (arm64) | `./scripts/package-macos.sh 0.0.8` | `*-macos-arm64.dmg` (PySide6) |
-| macOS (Intel x86_64) | `./scripts/package-macos.sh 0.0.8` (on Intel Mac) | `*-macos-x86_64.dmg` (PySide2 + shim; see [build/macos_x86_64/README.md](build/macos_x86_64/README.md)) |
-| Linux | `./scripts/package-linux.sh 0.0.8` | `.tar.gz` + `.AppImage` |
-| All (build only) | `.\scripts\build.ps1` / `./scripts/build.sh` | `dist/S3MANAGER/` |
-
-Windows packaging requires [NSIS](https://nsis.sourceforge.io/) (`makensis` in PATH or via Chocolatey: `choco install nsis`). CI installs NSIS via Chocolatey. Icon generation: `python scripts/generate_icons.py` (requires Pillow).
-
-`s3manager.spec` packages only the PySide6 modules required for QtWidgets (does not use `collect_all`). Scripts create a venv, install `requirements.txt` + `requirements-dev.txt`, and build with PyInstaller.
-
-**Known limitations:** Windows Defender / macOS Gatekeeper may warn about unsigned binaries.
-
-## Usage
-
-### Connection
-
-1. **Connect** → enter credentials (connection is validated)
-2. If saved credentials exist, the app connects automatically
-
-### File explorer
-
-- Double-click a folder; navigate with breadcrumbs at the top (list cache used when going back)
-- **← Back**, **Refresh**, click column headers to sort
-- Multi-select with Ctrl/Shift; right-click menu
-
-### Upload
-
-1. **Upload** → Select File or Folder (each selection replaces the list)
-2. Choose Private/Public → **Start Upload**
-3. Progress: percentage, speed, multipart info
-
-**Content-Type** and **Content-Disposition** are set automatically based on file extension (e.g. `.html` opens in browser, `.zip` downloads). Rules can be customized via **Settings → Upload Metadata...** or **Settings...** in the upload dialog (`~/.s3manager/config.ini` `[upload_metadata]`).
-
-### Download
-
-1. Select file(s)/folder → **Download** or right-click **Download Selected**
-2. Choose destination folder
-
-### Share
-
-1. Select a single file → **Share** (3/7 day choice) or right-click menu
-2. Link is copied to clipboard automatically
-
-### Settings
-
-Toolbar **Settings** → tabbed dialog:
-
-| Tab | Function |
-|-----|----------|
-| Connection | Saved bucket/region/endpoint; edit connection |
-| Upload Metadata | Content-Type / Disposition / Cache-Control rules |
-| Appearance | Dark / light theme |
-| Log | Last lines of `app.log` |
-| Maintenance | List / abort incomplete multipart uploads |
-| Help | Version, update check, GitHub Releases |
-
-### Object properties
-
-With a single file selected, right-click **Properties** or **Properties** in the preview panel → edit Content-Type, Cache-Control, custom metadata (`x-amz-meta-*`), and ACL (private / public-read).
-
-### Other
-
-- Right-click empty area → **New Folder**, **Upload File**
-- **Settings** → all configuration and help
-- Toolbar **●** connection indicator (green = connected); click to Connect
-- Toolbar **🌙/☀️** for dark/light theme
-- **Del** delete, **F5** refresh, **Ctrl+A** select all, **F2** rename, **Ctrl+C/X** copy/move
-- Drag-and-drop onto main window to upload
-
-## Logging
-
-`~/.s3manager/app.log`: RotatingFileHandler, 10MB, 5 backups. See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
-
-## Configuration
-
-`~/.s3manager/config.ini` — example: [config.example.ini](config.example.ini)
-
-## Supported regions
-
-`nyc3` · `sfo3` · `sgp1` · `ams3` · `fra1` · `blr1`
-
 ## Development
 
-### Tests
-
 ```bash
-pip install -r requirements-dev.txt
-pytest                                    # all tests (93)
-pytest tests/unit -v                      # unit only
-pytest --cov=src --cov-report=html        # HTML report → htmlcov/
-sh scripts/test.sh                        # venv + pytest (Git Bash)
+pnpm tauri dev      # app with Vite HMR
+pnpm check          # svelte-check (TypeScript + Svelte)
+pnpm test:rust      # Rust unit tests
+pnpm tauri build    # release bundles for the current platform
 ```
 
-Marketing site screenshots: `python scripts/capture_screenshots.py` · OG image: `python scripts/generate_og_image.py`
+### Tests against a live endpoint
 
-Configuration: [`pyproject.toml`](pyproject.toml). CI runs a `pytest` job on `ubuntu-latest`; the build matrix starts only after tests pass.
+`pnpm test:live` runs the ignored integration tests (listing, paging, copy/rename/delete, metadata, presign, multipart upload, folder download, cancel). Each run uses a fresh `it-<uuid>/` prefix and deletes it afterwards. Locally with MinIO:
 
-| Layer | Tool | Directory |
-|-------|------|-----------|
-| Unit | pytest | `tests/unit/` |
-| Service (S3 mock) | pytest + moto | `tests/services/` |
+```bash
+podman run -d --rm --name s3m-minio -p 9000:9000 \
+  -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
+  cgr.dev/chainguard/minio:latest server /data
+curl --aws-sigv4 "aws:amz:us-east-1:s3" --user minioadmin:minioadmin -X PUT http://localhost:9000/s3m-test
 
-GUI (PySide6) tests are out of scope.
+S3M_IT_ENDPOINT=http://localhost:9000 S3M_IT_KEY=minioadmin S3M_IT_SECRET=minioadmin \
+S3M_IT_BUCKET=s3m-test S3M_IT_PATH_STYLE=1 pnpm test:live
+```
+
+MinIO ignores canned ACLs; on Spaces or AWS also set `S3M_IT_ACL=1` to assert them. CI runs the same tests against MinIO before the build matrix.
+
+### Release
+
+Set the same version in `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `package.json`, add `release-notes/vX.Y.Z.md`, commit, then:
+
+```bash
+git tag v0.1.0
+git push origin main v0.1.0
+```
+
+The `Release` workflow builds Windows, macOS (arm64 + x86_64) and Linux bundles with `tauri-action` and publishes a GitHub Release with the notes file as its body.
+
+## Logging and configuration
+
+- Log: `~/.s3manager/app.log` (rotated at 2 MB)
+- Config: `~/.s3manager/config.ini` — example: [config.example.ini](config.example.ini)
 
 ## Development note
 
@@ -328,7 +271,7 @@ GUI (PySide6) tests are out of scope.
 | File | Content |
 |------|---------|
 | [docs/](docs/) | Marketing site — [s3manager.bahadirdogru.com](https://s3manager.bahadirdogru.com/) |
-| [PROCESS.md](PROCESS.md) | Change history (changelog) |
+| [process.md](process.md) | Change history (changelog) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Architecture and data flow |
 | [UI.md](UI.md) | Design system |
 | [LLM.md](LLM.md) | LLM development guide |

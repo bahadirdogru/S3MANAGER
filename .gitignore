@@ -1,59 +1,31 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/*
-!build/macos_x86_64/
-!build/macos_x86_64/**
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+node_modules
 
-# Virtual Environment
-venv/
-env/
-ENV/
-.venv
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
 
-# python.org 3.10.11 + legacy libintl for Intel macOS 10.13+ release builds
-.python-legacy/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# OS
 .DS_Store
-.cursor/
+Thumbs.db
 
-# Project specific
+# Env
 .env
-.s3manager/
-.pydamlaspace/
-config.ini
+.env.*
+!.env.example
+!.env.test
 
-# Logs
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Tauri
+/src-tauri/target/
+/src-tauri/gen/schemas
+
+# Logs / local config
 *.log
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Distribution
-*.zip
-*.tar.gz
+config.ini

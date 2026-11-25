@@ -4,158 +4,94 @@
 > |-------|----------------|
 > | [README.md](README.md) | Kurulum, kullanım, proje tanıtımı (GitHub/GitLab anasayfa) |
 > | [docs/](docs/) | Tanıtım web sitesi ([s3manager.bahadirdogru.com](https://s3manager.bahadirdogru.com/)) |
-> | [UI.md](UI.md) | Renk, font, widget, QSS tasarım standartları |
-> | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, threading (insan okuması) |
+> | [UI.md](UI.md) | Renk, tema token'ları, shadcn-svelte bileşen ve UX kuralları |
+> | [ARCHITECTURE.md](ARCHITECTURE.md) | Mimari katmanlar, veri akışı, eşzamanlılık (insan okuması) |
 > | [LLM.md](LLM.md) | Güncel kod yapısı, dosya haritası, geliştirme kısıtları (LLM) |
-> | [PROCESS.md](PROCESS.md) | Kronolojik değişiklik kayıtları (changelog) |
+> | [process.md](process.md) | Kronolojik değişiklik kayıtları (changelog) |
 >
 > **Bu dosya:** LLM için token-optimize proje yapısı ve geliştirme kısıtları.
 
 # S3MANAGER — LLM Rehberi
 
-DigitalOcean Spaces masaüstü dosya yöneticisi. Python 3.10+, PySide6, boto3, pyperclip. Sürüm: **0.0.9** (`src/version.py`). **pytest** — 93 test (`tests/`).
+S3 uyumlu depolama masaüstü dosya yöneticisi. **Tauri 2** — Rust backend (`aws-sdk-s3`, `tokio`) + SvelteKit 3 / Svelte 5 / TypeScript frontend + shadcn-svelte (vega, lucide) + Tailwind 4. Paket yöneticisi **pnpm**. Sürüm: **0.1.0** (`src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `package.json` — üçü aynı tutulur). Python kodu yoktur.
 
 ## Dizin yapısı
 
 ```
 S3MANAGER/
-├── docs/                        # Tanıtım sitesi (GitHub Pages → s3manager.bahadirdogru.com)
-│   ├── index.html, css/, js/, assets/, screenshots/, CNAME
-├── release-notes/               # GitHub Release body (v0.0.8.md …)
-├── tests/
-│   ├── conftest.py              # mock_config_dir, spaces_client (moto)
-│   ├── unit/                    # helpers, validators, metadata, cache, settings
-│   └── services/                # SpacesClient (moto mock S3)
-├── pyproject.toml               # pytest + coverage yapılandırması
+├── src-tauri/
+│   ├── Cargo.toml, tauri.conf.json, capabilities/default.json, icons/
+│   └── src/
+│       ├── main.rs          # s3manager_lib::run()
+│       ├── lib.rs           # plugin'ler, invoke_handler (komut listesi), log hedefleri
+│       ├── commands.rs      # AppState + tüm #[tauri::command]
+│       ├── s3.rs            # Spaces istemcisi + `live` entegrasyon testi
+│       ├── transfers.rs     # TransferManager, Sink, expand_local + `live` transfer testi
+│       ├── config.rs        # ~/.s3manager/config.ini
+│       ├── metadata.rs      # Content-Type / Disposition kuralları
+│       └── error.rs         # AppError, s3() hata dönüştürücü
 ├── src/
-│   ├── main.py
-│   ├── version.py               # __version__, GITHUB_REPO
-│   ├── config/
-│   │   ├── settings.py          # ~/.s3manager/config.ini (+ updates dismissed)
-│   │   └── credentials.py
-│   ├── ui/qt/
-│   │   ├── main_window.py       # Workers, MainWindow, iki satır toolbar, btn_settings
-│   │   ├── models.py
-│   │   ├── dialogs.py
-│   │   ├── settings_dialog.py   # Tab'lı Ayarlar (Bağlantı, Metadata, Görünüm, Günlük, Bakım, Yardım)
-│   │   ├── object_properties_dialog.py  # Nesne metadata / ACL
-│   │   ├── incomplete_uploads_panel.py  # Yarım multipart (Bakım sekmesi)
-│   │   ├── upload_metadata_panel.py  # Metadata form widget
-│   │   ├── styles.py            # ThemePalette, build_stylesheet, apply_app_theme, apply_item_view_palette
-│   │   ├── theme_switch.py      # Toolbar tema toggle
-│   │   ├── connection_indicator.py  # Bağlantı göstergesi (yeşil/kırmızı)
-│   │   ├── preview_panel.py
-│   │   ├── transfer_panel.py
-│   │   └── file_tree_view.py
-│   ├── services/
-│   │   ├── spaces_client.py
-│   │   ├── upload_service.py
-│   │   ├── share_service.py
-│   │   ├── listing_cache.py
-│   │   └── update_service.py    # GitHub Releases API
-│   └── utils/
-│       ├── helpers.py
-│       ├── log_viewer.py        # read_log_tail (günlük sekmesi)
-│       └── object_metadata.py   # MIME tespiti, upload ExtraArgs
-├── assets/                      # icon.png, icon.ico, icon.icns (macOS build)
-├── build/macos_x86_64/          # Intel macOS release only: PySide6 shim + legacy_entry.py
-├── requirements-macos-x86_64.txt  # PySide2 (release Intel DMG; dev'de gerekmez)
-├── .github/workflows/
-│   ├── ci.yml                   # PR/main: test → matrix build
-│   └── release.yml              # tag → build + release-notes/vX.Y.Z.md body
-├── scripts/
-│   ├── build.ps1 / build.sh
-│   ├── test.sh                  # venv + pytest + coverage
-│   ├── capture_screenshots.py   # docs/screenshots/ UI görüntüleri
-│   ├── generate_og_image.py     # docs/assets/og-image.png
-│   ├── package-windows.ps1      # NSIS installer (makensis otomatik bulunur)
-│   ├── package-macos.sh         # DMG (arm64 PySide6 / x86_64 legacy)
-│   ├── setup-macos-legacy-python.sh  # python.org 3.10.11 (Intel release)
-│   ├── build-macos-legacy-libintl.sh # 10.13 hedefli libintl derlemesi
-│   ├── fix-macos-legacy-dylibs.sh    # LC_DYLD_CHAINED_FIXUPS duzeltmesi
-│   ├── verify-macos-legacy-binary.sh # macOS 10.13 dylib uyumluluk kontrolü
-│   ├── package-linux.sh         # tar.gz + AppImage (--appimage-extract-and-run CI)
-│   ├── generate_icons.py
-│   └── installer/windows.nsi
-├── start.sh                     # venv + pip + python src/main.py (Git Bash/WSL)
-├── s3manager.spec               # PySide6 collect_all YOK; QtWidgets only
-├── s3manager-macos-x86_64.spec  # Intel macOS release: PySide2 + shim (min 10.13)
+│   ├── app.html, routes/(+layout.svelte, +layout.ts, +page.svelte, layout.css)
+│   └── lib/
+│       ├── api.ts           # invoke() sarmalayıcıları + tipler (Rust struct'larının aynası)
+│       ├── actions.ts       # kullanıcı işlemleri
+│       ├── format.ts        # boyut/tarih, uniqueCopyName, toPrefix, DO_REGIONS
+│       ├── stores/          # explorer, transfers, session, dialogs, ui (*.svelte.ts, runes)
+│       └── components/
+│           ├── app/         # Explorer, FileTable, PreviewPanel, TransferPanel, LoginView, *Dialog, DialogHost
+│           └── ui/          # shadcn-svelte üretimi — elle düzenleme
+├── static/                  # favicon
+├── docs/                    # Tanıtım sitesi (GitHub Pages)
+├── release-notes/           # vX.Y.Z.md → GitHub Release gövdesi
+├── assets/                  # kaynak ikon (icon.png → `pnpm tauri icon assets/icon.png`)
+├── .github/workflows/       # ci.yml (check + test + MinIO canlı test → build matrisi), release.yml (tauri-action)
+├── components.json          # shadcn-svelte ayarları (alias'lar #lib/…)
+└── vite.config.ts           # SvelteKit config da burada (Kit 3), adapter-static, port 1420
 ```
 
-**macOS kuralı:** UI kodu `PySide6` import kullanır. Intel legacy build shim + **python.org 3.10.11** ile release'te çözülür — `src/` değiştirilmez. Günlük dev/CI yalnızca PySide6 (`setup-python` Intel release'te kullanılmaz).
+## Kritik kurallar
 
-Release artifact'ları (6): Windows setup + portable, macOS arm64 dmg, macOS x86_64 dmg, Linux tar.gz + AppImage.
+1. **`#lib` import'ları tam yol ister** (Node subpath imports, Kit 3): `#lib/api.js`, `#lib/stores/explorer.svelte.js`, `#lib/components/ui/button/index.js`. Uzantısız `#lib/api` derlenmez.
+2. **Yeni komut:** `commands.rs`'e fonksiyon → `lib.rs` `generate_handler!` listesine ekle → `api.ts`'e tipli sarmalayıcı. Rust parametreleri snake_case, JS tarafında camelCase gönderilir (`dest_dir` ↔ `destDir`). Struct'lar `#[serde(rename_all = "camelCase")]`.
+3. **Ağ IO'su yalnızca Rust'ta.** Frontend S3'e `fetch` yapmaz; CSP buna izin vermez.
+4. **Anahtarlar:** baştaki `/` her zaman `norm()` ile atılır; klasör önekleri `as_prefix()` ile `/` ile biter (kök = `""`).
+5. **ACL korunur:** `CopyObject` ACL'i sıfırlar — kopyala/taşı/metadata güncelle kaynak ACL'ini yeniden uygular. Yeni kopyalama yolu eklerken aynısını yap.
+6. **Checksum:** istemci `WhenRequired` ile kurulur; değiştirme (Spaces/MinIO/R2 kırılır).
+7. **Transfer:** multipart eşiği `MULTIPART_THRESHOLD` (16 MB), parça ≥ 8 MB, ≤ 10 000 parça, parça eşzamanlılığı 4, dosya eşzamanlılığı 3. Hata/iptalde `abort_multipart`. İndirme `.part` → rename. İlerleme yalnızca `Reporter`/`Sink` üzerinden.
+8. **İndirme yolu güvenliği:** anahtar → yerel yol dönüşümü `safe_relative` / `safe_name` ile yapılır; bypass etme.
+9. **Listeleme:** sayfa 200; stale yanıtlar `explorer` içindeki nesil sayacıyla atılır. ACL listede çekilmez — görünen satırlar için `wantAcl()`.
+10. **Toplu işlem kilidi:** kopyala/taşı/sil/yeniden adlandır `ui.busy` ile tek seferde bir tane.
+11. **Diyaloglar:** basit soru için `dialogs.prompt()` / `dialogs.confirm()`; yeni özellik diyaloğu için `ui` store'una durum + `Explorer.svelte` altına bileşen.
+12. **Kısayollar** `Explorer.svelte` `onKeydown` içinde; input'ta yazarken ve diyalog açıkken çalışmaz.
+13. **Stil:** renkler yalnızca tema token'larından (`bg-primary`, `text-muted-foreground`, `bg-selected`, `text-success`, `text-warning`…) — bkz. [UI.md](UI.md). Hex yazma.
+14. **shadcn bileşeni ekleme:** `pnpm dlx shadcn-svelte@latest add <ad>`; `components/ui/` altını elle değiştirme.
+15. **Config uyumu:** `config.ini` bölüm/anahtar adlarını değiştirme (eski kurulumlar okunuyor).
+16. **Dökümantasyon:** README (EN), readmetr (TR), UI, ARCHITECTURE, LLM, process.md — yeni üst düzey md oluşturma. Changelog yalnızca `process.md`.
 
-## Kritik dosyalar
+## Komutlar (`commands.rs`)
 
-| Dosya | Amaç |
-|-------|------|
-| `main_window.py` | UI koordinasyon, QThread workers, `_stop_list_worker` / `_detach_list_worker` |
-| `models.py` | `FileModel`: `append_items`, `canFetchMore`, ACL lazy |
-| `spaces_client.py` | `list_objects_page`, CRUD, `put_object_acl`, `update_object_metadata`, `delete_objects_batch`, multipart list/abort |
-| `upload_service.py` | Multipart upload, progress callbacks, metadata ExtraArgs |
-| `object_metadata.py` | `guess_content_type`, `build_upload_extra_args`, `UploadMetadataSettings` |
-| `listing_cache.py` | Prefix bazlı liste cache (TTL 60s) |
-| `dialogs.py` | Login, Upload, ShareDialog, UploadMetadataSettingsDialog (wrapper) |
-| `settings_dialog.py` | SettingsDialog — Bağlantı, Metadata, Görünüm, Günlük, Bakım, Yardım sekmeleri |
-| `styles.py` | `ThemePalette`, `apply_app_theme()`, `apply_item_view_palette()` — QApplication seviyesinde tema |
-| `theme_switch.py` | Toolbar `ThemeSwitch` widget (🌙/☀️) |
-| `settings.py` | config.ini; `[upload_metadata]`, `[appearance] theme` |
+| Grup | Komutlar |
+|------|----------|
+| Oturum | `get_startup`, `default_endpoint`, `connect`, `disconnect`, `ping` |
+| Gezinme | `list_page`, `get_acls`, `set_acl`, `object_info`, `update_metadata`, `preview` |
+| Dosya işlemleri | `create_folder`, `delete_items`, `copy_item`, `move_item`, `rename_item`, `share_link` |
+| Transfer | `expand_upload`, `start_upload`, `start_download`, `cancel_transfer`, `cancel_all_transfers`, `active_transfers` |
+| Bakım | `list_multipart`, `abort_multipart` |
+| Ayarlar | `get_upload_metadata`, `save_upload_metadata`, `save_theme`, `check_update`, `dismiss_update`, `read_log` |
 
-## Workers (QThread)
-
-| Worker | Görev |
-|--------|-------|
-| `SpacesWorker` | Sayfalı listeleme → `page_loaded` signal |
-| `AttributeWorker` | Görünür satırlar için ACL lazy load |
-| `ActionWorker` | Silme, klasör oluşturma |
-| `DownloadWorker` | İndirme |
-| `ParallelUploadWorker` | ThreadPoolExecutor max 3 paralel upload |
-
-## Geliştirme kısıtları
-
-1. **Threading:** UI ana thread; ağ IO worker'da. UI güncelleme → Signal/Slot. `thread.terminate()` kullanma → `requestInterruption()`. Liste worker navigasyonda `_detach_list_worker` ile sinyaller koparılır; stale callback guard (`sender() is _list_worker`).
-2. **Listeleme:** `list_objects_page()` sayfa sayfa; `FileModel.append_items()` — `beginResetModel` ile binlerce satırı tek seferde yükleme.
-3. **Multipart eşiği:** 100 MB (`helpers.MULTIPART_THRESHOLD_MB` ve `TransferConfig`).
-4. **ACL listelemede çekilmez** — `AttributeWorker` görünür satırlarda lazy load.
-5. **Config:** `~/.s3manager/config.ini` düz metin; log `~/.s3manager/app.log`. Eski `~/.pydamlaspace/` otomatik taşınır. `[upload_metadata]` — yükleme Content-Type/Disposition/Cache-Control. `[appearance] theme` — `dark`/`light`.
-6. **Tema:** `apply_app_theme()` → `QApplication.setStyleSheet`; tablolar için `apply_item_view_palette()`; dialog gölge `apply_dialog_elevation(dark=...)`.
-7. **Upload progress:** `progress.lock` içinde `get_progress()` çağırma (deadlock).
-8. **UploadDialog:** Dosya Seç = liste replace; `clear_progress_area()` yeni seçimde.
-9. **Remote key:** Leading `/` olmamalı.
-10. **Dökümantasyon:** README, UI, ARCHITECTURE, LLM, PROCESS, docs/ — yeni üst düzey md oluşturma. Changelog yalnızca PROCESS.md.
-11. **Changelog:** [PROCESS.md](PROCESS.md).
-
-## Yeni özellik akışı
-
-1. Servis katmanı (`src/services/`)
-2. Qt UI (`src/ui/qt/`)
-3. MainWindow entegrasyonu + QThread gerekirse
-4. Stil → [UI.md](UI.md); mimari → [ARCHITECTURE.md](ARCHITECTURE.md)
-5. [PROCESS.md](PROCESS.md) changelog güncelle
-
-## Bağımlılıklar
-
-`boto3`, `PySide6`, `pyperclip` — `requirements.txt`  
-Test: `pytest`, `pytest-cov`, `moto[s3]`, `freezegun` — `requirements-dev.txt`
+Olay: `transfer` → `TransferEvent { id, direction, name, remoteKey, localPath, total, transferred, status, error, speed, multipart }`.
 
 ## Test
 
-- `sh scripts/test.sh` veya `pytest` — 93 test; coverage eşiği %60 (`pyproject.toml`)
-- `tests/unit/` + `tests/services/` (moto S3); UI (`src/ui/*`) omit
-- CI: `.github/workflows/ci.yml` → `test` job → `build` matrix
-- GUI testleri yok (`pytest-qt` kullanılmaz)
+- `pnpm check` — svelte-check, 0 hata / 0 uyarı tutulur
+- `pnpm test:rust` — birim testleri
+- `pnpm test:live` — canlı S3 (`S3M_IT_ENDPOINT`, `S3M_IT_KEY`, `S3M_IT_SECRET`, `S3M_IT_BUCKET`, isteğe bağlı `S3M_IT_REGION`, `S3M_IT_PATH_STYLE`, `S3M_IT_ACL`). MinIO ACL'i yok sayar; `max-keys=1` + klasör işaretçisinde `IsTruncated` yanlış döner — testler 2 kullanır.
+- Frontend bileşen testi yok.
 
-## Çalıştırma
+## Çalıştırma / derleme
 
-`./start.sh` (Git Bash/WSL) veya `python src/main.py` (venv aktif)
-
-## Derleme (onedir)
-
-`scripts/build.ps1` (Windows) veya `scripts/build.sh` (Linux/macOS). Çıktı: `dist/S3MANAGER/` klasörü (exe + `_internal/`) ve `dist/S3MANAGER.zip`. `s3manager.spec` içinde `collect_all("PySide6")` kullanılmaz. Frozen'da `paths.is_frozen()` → `sys._MEIPASS`; kullanıcı verisi `~/.s3manager/`.
+`pnpm tauri dev` (HMR) · `pnpm tauri build` (mevcut platform paketleri) · Linux bağımlılıkları (Fedora): `webkit2gtk4.1-devel gtk3-devel libsoup3-devel openssl-devel`.
 
 ## Release
 
-`src/version.py` güncelle → commit → `git tag v0.0.8 && git push origin main && git push origin v0.0.8`
-
-`release-notes/vX.Y.Z.md` ekle; `release.yml` tag push'ta binary + release body oluşturur.
+Üç dosyada sürümü güncelle → `release-notes/vX.Y.Z.md` → commit → `git tag vX.Y.Z && git push origin main vX.Y.Z`. `release.yml` tauri-action ile Windows (nsis+msi), macOS arm64 + x86_64 (dmg), Linux (AppImage, deb, rpm) üretir.

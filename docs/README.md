@@ -15,19 +15,13 @@ Bu klasör statik tanıtım sitesini içerir.
 
 ## Yerel önizleme
 
-`docs/index.html` dosyasını tarayıcıda açın veya:
+`docs/index.html` dosyasını tarayıcıda açın veya `npx serve docs` çalıştırın.
 
-```bash
-python -m http.server 8080 --directory docs
-```
+## Ekran görüntüleri
 
-## Ekran görüntülerini yenileme
-
-```bash
-python scripts/capture_screenshots.py
-python scripts/generate_og_image.py
-```
+`docs/screenshots/` elle güncellenir: uygulamayı `pnpm tauri dev` ile açıp koyu/açık tema ana pencere, önizleme ve ayarlar
+ekranlarının görüntüsünü alın (`main-dark.png`, `main-light.png`, `preview.png`, `settings.png`).
 
 ## İndirme tablosu
 
-Kullanıcıya dönük platform/DMG tablosu `docs/index.html` içindedir (README Releases bölümü ile senkron tutulmalı). macOS için arm64 (13+) ve Intel x86_64 (10.13+) satırları ayrı gösterilir.
+Kullanıcıya dönük platform/DMG tablosu `docs/index.html` içindedir (README Releases bölümü ile senkron tutulmalı). macOS için arm64 ve Intel x86_64 satırları ayrı gösterilir (Tauri sürümlerinde minimum macOS 10.15).
