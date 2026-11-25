@@ -34,7 +34,7 @@
 
 **S3MANAGER**, DigitalOcean Spaces'teki — veya AWS S3, MinIO, Cloudflare R2 gibi herhangi bir S3 uyumlu servisteki — dosyalarınızı yerel bir masaüstü uygulaması deneyimiyle yönetmenizi sağlar. Yükleme, indirme, paylaşım ve klasör yönetimi tek bir modern arayüzde birleşir.
 
-v0.1.0'dan itibaren uygulama **Tauri 2** ile geliştirilir: **Rust** backend (`aws-sdk-s3`, `tokio`) ve **shadcn-svelte** bileşenleri kullanan **SvelteKit + TypeScript** frontend. Önceki PySide6 (Python) sürümü v0.0.9'a kadarki release'lerde bulunur.
+v1.0.0'dan itibaren uygulama **Tauri 2** ile geliştirilir: **Rust** backend (`aws-sdk-s3`, `tokio`) ve **shadcn-svelte** bileşenleri kullanan **SvelteKit + TypeScript** frontend. Önceki PySide6 (Python) sürümü v0.0.9'a kadarki release'lerde bulunur.
 
 Bu proje [Bahadır Doğru](https://bahadirdogru.com) tarafından **S3MANAGER** adıyla geliştirilmekte olup **GPL-3.0** lisansı ile açık kaynak olarak yayınlanmaktadır.
 
@@ -205,8 +205,8 @@ MinIO canned ACL'leri yok sayar; Spaces veya AWS'de ACL doğrulaması için `S3M
 Aynı sürümü `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` ve `package.json` dosyalarına yazın, `release-notes/vX.Y.Z.md` ekleyin, commit edin:
 
 ```bash
-git tag v0.1.0
-git push origin main v0.1.0
+git tag v1.0.0
+git push origin main v1.0.0
 ```
 
 `Release` workflow'u `tauri-action` ile Windows, macOS (arm64 + x86_64) ve Linux paketlerini üretir ve notlar dosyasını gövde olarak kullanan bir GitHub Release yayınlar.

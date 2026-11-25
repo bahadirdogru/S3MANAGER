@@ -36,7 +36,7 @@
 
 **S3MANAGER** lets you manage files on DigitalOcean Spaces — or any S3-compatible service such as AWS S3, MinIO or Cloudflare R2 — with a native desktop experience. Upload, download, sharing and folder management come together in a single modern interface.
 
-Since v0.1.0 the app is built with **Tauri 2**: a **Rust** backend (`aws-sdk-s3`, `tokio`) and a **SvelteKit + TypeScript** frontend using **shadcn-svelte** components. The earlier PySide6 (Python) version is available in releases up to v0.0.9.
+Since v1.0.0 the app is built with **Tauri 2**: a **Rust** backend (`aws-sdk-s3`, `tokio`) and a **SvelteKit + TypeScript** frontend using **shadcn-svelte** components. The earlier PySide6 (Python) version is available in releases up to v0.0.9.
 
 This project is developed by [Bahadır Doğru](https://bahadirdogru.com) under the name **S3MANAGER** and is released as open source under the **GPL-3.0** license.
 
@@ -212,7 +212,7 @@ Requires a separate **DO API token** (Spaces keys do not work).
 
 ### Completed
 
-- **v0.1.0** — Rewrite in Tauri 2 (Rust + SvelteKit/TypeScript + shadcn-svelte); any S3-compatible endpoint; ACL preserved on copy/move/metadata edits; public URL display; cancel aborts multipart uploads
+- **v1.0.0** — Rewrite in Tauri 2 (Rust + SvelteKit/TypeScript + shadcn-svelte); any S3-compatible endpoint; ACL preserved on copy/move/metadata edits; public URL display; cancel aborts multipart uploads
 - **v0.0.7+** — Object properties, incomplete multipart management, bulk delete, rename/move/copy, prefix search, drag-and-drop, transfer history, preview panel
 
 ### Deliberately out of scope (for now)
@@ -251,8 +251,8 @@ MinIO ignores canned ACLs; on Spaces or AWS also set `S3M_IT_ACL=1` to assert th
 Set the same version in `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` and `package.json`, add `release-notes/vX.Y.Z.md`, commit, then:
 
 ```bash
-git tag v0.1.0
-git push origin main v0.1.0
+git tag v1.0.0
+git push origin main v1.0.0
 ```
 
 The `Release` workflow builds Windows, macOS (arm64 + x86_64) and Linux bundles with `tauri-action` and publishes a GitHub Release with the notes file as its body.

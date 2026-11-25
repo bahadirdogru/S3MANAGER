@@ -13,7 +13,7 @@
 
 # S3MANAGER — LLM Rehberi
 
-S3 uyumlu depolama masaüstü dosya yöneticisi. **Tauri 2** — Rust backend (`aws-sdk-s3`, `tokio`) + SvelteKit 3 / Svelte 5 / TypeScript frontend + shadcn-svelte (vega, lucide) + Tailwind 4. Paket yöneticisi **pnpm**. Sürüm: **0.1.0** (`src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `package.json` — üçü aynı tutulur). Python kodu yoktur.
+S3 uyumlu depolama masaüstü dosya yöneticisi. **Tauri 2** — Rust backend (`aws-sdk-s3`, `tokio`) + SvelteKit 3 / Svelte 5 / TypeScript frontend + shadcn-svelte (vega, lucide) + Tailwind 4. Paket yöneticisi **pnpm**. Sürüm: **1.0.0** (`src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `package.json` — üçü aynı tutulur). Python kodu yoktur.
 
 ## Dizin yapısı
 

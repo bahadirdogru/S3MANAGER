@@ -1,6 +1,6 @@
 [package]
 name = "s3manager"
-version = "0.1.0"
+version = "1.0.0"
 description = "S3 compatible storage manager"
 authors = ["Bahadır Doğru"]
 license = "GPL-3.0-only"

@@ -17,7 +17,7 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
-## 2026-11-25 — v0.1.0: Tauri 2 + Rust + SvelteKit yeniden yazımı
+## 2026-11-25 — v1.0.0: Tauri 2 + Rust + SvelteKit yeniden yazımı
 
 - **Ne:** PySide6/boto3 uygulaması kaldırıldı; aynı işlevler Tauri 2 ile yeniden yazıldı. Backend Rust (`aws-sdk-s3`, `tokio`), frontend SvelteKit 3 + Svelte 5 + TypeScript + shadcn-svelte (vega) + Tailwind 4.
 - **Korunan:** `~/.s3manager/config.ini` dosya/bölüm uyumu, sayfalı listeleme + 60 s cache, lazy ACL, önek araması, kopyala/taşı/yeniden adlandır (`(kopya n)`), toplu silme, 3/7 gün presigned link (panoya), nesne özellikleri (Content-Type, Cache-Control, `x-amz-meta-*`, ACL), metadata kuralları, yarım multipart bakımı, günlük sekmesi, GitHub güncelleme kontrolü ("bu sürümü atla"), koyu/açık WhatsApp paleti, kısayollar, sürükle-bırak.
