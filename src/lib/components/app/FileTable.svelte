@@ -74,7 +74,7 @@
 	const sel = $derived(explorer.selectedItems);
 	const single = $derived(sel.length === 1 ? sel[0] : null);
 
-	const columns = 'grid-cols-[minmax(0,1fr)_7rem_10rem_5.5rem]';
+	const columns = 'grid-cols-[minmax(0,1fr)_7rem_10rem_7.5rem]';
 </script>
 
 {#snippet sortHeader(key: 'name' | 'size' | 'modified', label: string, cls = '')}
@@ -161,7 +161,7 @@
 								{item.kind === 'file' ? formatSize(item.size) : ''}
 							</span>
 							<span class="text-muted-foreground tabular-nums">{formatDate(item.modified)}</span>
-							<span class="text-muted-foreground flex items-center gap-1 text-xs">
+							<span class="text-muted-foreground flex items-center gap-1 text-xs whitespace-nowrap">
 								{#if item.kind === 'file'}
 									{#if acl === 'public-read'}
 										<GlobeIcon class="text-warning size-3.5" /> Herkese açık

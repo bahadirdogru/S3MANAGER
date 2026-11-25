@@ -17,6 +17,15 @@ Ters kronolojik sıra. Gelecek işler burada tutulmaz.
 
 ---
 
+## 2026-11-25 — Erişim sütunu taşması, yeni ekran görüntüleri
+
+- **Sorun:** Dosya tablosunda "Herkese açık" etiketi 5.5rem'lik Erişim sütununa sığmayıp iki satıra kırılıyor ve `h-8` satırın dışına taşıyordu.
+- **Çözüm:** Sütun 7.5rem, etiket `whitespace-nowrap`.
+- **Site:** `docs/screenshots/` Tauri arayüzünden yeniden çekildi (1280×800 @2x, örnek bucket verisi).
+- **Dosyalar:** `src/lib/components/app/FileTable.svelte`, `docs/screenshots/*.png`, `docs/index.html`, `docs/README.md`
+
+---
+
 ## 2026-11-25 — v1.0.0: Tauri 2 + Rust + SvelteKit yeniden yazımı
 
 - **Ne:** PySide6/boto3 uygulaması kaldırıldı; aynı işlevler Tauri 2 ile yeniden yazıldı. Backend Rust (`aws-sdk-s3`, `tokio`), frontend SvelteKit 3 + Svelte 5 + TypeScript + shadcn-svelte (vega) + Tailwind 4.

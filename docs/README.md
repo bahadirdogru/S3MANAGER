@@ -19,8 +19,7 @@ Bu klasör statik tanıtım sitesini içerir.
 
 ## Ekran görüntüleri
 
-`docs/screenshots/` elle güncellenir: uygulamayı `pnpm tauri dev` ile açıp koyu/açık tema ana pencere, önizleme ve ayarlar
-ekranlarının görüntüsünü alın (`main-dark.png`, `main-light.png`, `preview.png`, `settings.png`).
+`docs/screenshots/` 1280×800 @2x (2560×1600) görüntülerdir: koyu ve açık tema ana pencere, önizleme paneli ve Ayarlar → Bakım diyaloğu (`main-dark.png`, `main-light.png`, `preview.png`, `settings.png`). Örnek bucket verisiyle çekilir; gerçek bucket adı veya anahtar görünmemelidir.
 
 ## İndirme tablosu
 
