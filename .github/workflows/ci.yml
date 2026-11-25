@@ -38,8 +38,13 @@ jobs:
           docker run -d --name minio -p 9000:9000 \
             -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
             cgr.dev/chainguard/minio:latest server /data
-          for i in $(seq 1 30); do curl -sf http://localhost:9000/minio/health/live && break; sleep 1; done
-          curl -sf --aws-sigv4 "aws:amz:us-east-1:s3" --user minioadmin:minioadmin -X PUT http://localhost:9000/s3m-test
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /tmp/mb.txt -w '%{http_code}' --aws-sigv4 "aws:amz:us-east-1:s3" \
+              --user minioadmin:minioadmin -X PUT http://localhost:9000/s3m-test || true)
+            if [ "$code" = "200" ] || [ "$code" = "409" ]; then echo "bucket ready ($code)"; exit 0; fi
+            sleep 1
+          done
+          echo "MinIO bucket creation failed (last HTTP $code)"; cat /tmp/mb.txt; docker logs minio; exit 1
       - name: Rust tests (unit + live MinIO)
         env:
           S3M_IT_ENDPOINT: http://localhost:9000
