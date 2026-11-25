@@ -97,7 +97,7 @@ Download the file for your platform from [Releases](https://github.com/bahadirdo
 
 | Platform | File |
 |----------|------|
-| Windows | `S3MANAGER_<version>_x64-setup.exe` (NSIS) or `S3MANAGER_<version>_x64_en-US.msi` |
+| Windows | `S3MANAGER_<version>_x64-setup.exe` (NSIS) or `S3MANAGER_<version>_x64_tr-TR.msi` |
 | macOS (Apple Silicon) | `S3MANAGER_<version>_aarch64.dmg` |
 | macOS (Intel) | `S3MANAGER_<version>_x64.dmg` |
 | Linux x86_64 | `.AppImage`, `.deb` or `.rpm` |

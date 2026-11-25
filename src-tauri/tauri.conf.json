@@ -39,6 +39,11 @@
     ],
     "category": "Utility",
     "shortDescription": "S3 compatible storage manager",
-    "licenseFile": "../LICENSE"
+    "licenseFile": "../LICENSE",
+    "windows": {
+      "wix": {
+        "language": "tr-TR"
+      }
+    }
   }
 }

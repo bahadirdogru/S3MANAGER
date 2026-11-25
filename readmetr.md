@@ -93,7 +93,7 @@ Bu proje [Bahadır Doğru](https://bahadirdogru.com) tarafından **S3MANAGER** a
 
 | Platform | Dosya |
 |----------|-------|
-| Windows | `S3MANAGER_<sürüm>_x64-setup.exe` (NSIS) veya `S3MANAGER_<sürüm>_x64_en-US.msi` |
+| Windows | `S3MANAGER_<sürüm>_x64-setup.exe` (NSIS) veya `S3MANAGER_<sürüm>_x64_tr-TR.msi` |
 | macOS (Apple Silicon) | `S3MANAGER_<sürüm>_aarch64.dmg` |
 | macOS (Intel) | `S3MANAGER_<sürüm>_x64.dmg` |
 | Linux x86_64 | `.AppImage`, `.deb` veya `.rpm` |

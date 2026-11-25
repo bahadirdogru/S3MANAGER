@@ -94,4 +94,4 @@ Olay: `transfer` → `TransferEvent { id, direction, name, remoteKey, localPath,
 
 ## Release
 
-Üç dosyada sürümü güncelle → `release-notes/vX.Y.Z.md` → commit → `git tag vX.Y.Z && git push origin main vX.Y.Z`. `release.yml` tauri-action ile Windows (nsis+msi), macOS arm64 + x86_64 (dmg), Linux (AppImage, deb, rpm) üretir.
+Üç dosyada sürümü güncelle → `release-notes/vX.Y.Z.md` → commit → `git tag vX.Y.Z && git push origin main vX.Y.Z`. `release.yml` tauri-action ile Windows (nsis + msi; MSI dili `tr-TR`, çünkü WiX 1252 kod sayfası LICENSE içindeki ı/ğ harflerini taşıyamıyor), macOS arm64 + x86_64 (dmg), Linux (AppImage, deb, rpm) üretir.
